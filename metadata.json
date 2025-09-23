@@ -1,0 +1,5 @@
+{
+  "name": "Institute Web App",
+  "description": "A Progressive Web App for tertiary institute preceptors to manage student attendance, requests, and reports, based on provided wireframes.",
+  "requestFramePermissions": []
+}

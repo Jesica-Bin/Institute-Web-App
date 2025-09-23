@@ -1,0 +1,72 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { mockCertificateRequests } from '../../data';
+import { CertificateStatus } from '../../types';
+import { DocumentTextIcon } from '../../components/Icons';
+
+const StatusBadge = ({ status }: { status: CertificateStatus }) => {
+    const colorClasses = {
+        [CertificateStatus.PENDING]: 'bg-amber-100 text-amber-800',
+        [CertificateStatus.READY]: 'bg-indigo-100 text-indigo-800',
+        [CertificateStatus.DELIVERED]: 'bg-green-100 text-green-800',
+    };
+    return (
+        <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClasses[status]}`}>
+            {status}
+        </span>
+    );
+};
+
+const CertificatesScreen: React.FC = () => {
+
+    const isExpired = (expiryDate: string | undefined): boolean => {
+        if (!expiryDate) return false;
+        return new Date(expiryDate) < new Date();
+    };
+
+    return (
+        <div className="max-w-4xl mx-auto space-y-6">
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+                <h2 className="text-lg font-semibold text-slate-800">Gestiona tus constancias</h2>
+                <p className="text-sm text-slate-500 mt-1">Solicita un nuevo certificado o revisa el estado de tus solicitudes anteriores.</p>
+                <Link
+                    to="/solicitar-certificado"
+                    className="mt-4 block w-full bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-800 transition-colors text-center"
+                >
+                    Solicitar Nuevo
+                </Link>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm">
+                 <h2 className="text-lg font-bold text-slate-800 p-4 border-b border-slate-100">Mis Solicitudes</h2>
+                 {mockCertificateRequests.length > 0 ? (
+                    <ul className="divide-y divide-slate-100">
+                        {mockCertificateRequests.map(req => (
+                            <li key={req.id} className="p-4 flex items-center justify-between hover:bg-slate-50">
+                                <div>
+                                    <p className="font-semibold">{req.type}</p>
+                                    <p className="text-sm text-slate-500">
+                                        Solicitado el: {new Date(req.requestDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
+                                    </p>
+                                    {isExpired(req.expiryDate) && (
+                                         <p className="text-xs text-red-600 mt-1 font-semibold">
+                                            Vencido - Solicitar nuevamente
+                                        </p>
+                                    )}
+                                </div>
+                                <StatusBadge status={req.status} />
+                            </li>
+                        ))}
+                    </ul>
+                 ) : (
+                    <div className="p-8 text-center text-slate-500 flex flex-col items-center">
+                        <DocumentTextIcon className="w-12 h-12 text-slate-300 mb-2" />
+                        <p>Aún no has solicitado ningún certificado.</p>
+                    </div>
+                 )}
+            </div>
+        </div>
+    );
+};
+
+export default CertificatesScreen;
