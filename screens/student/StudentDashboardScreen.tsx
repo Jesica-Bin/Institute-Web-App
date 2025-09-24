@@ -459,7 +459,7 @@ const StudentDashboardScreen: React.FC = () => {
                     <div className="bg-white p-5 rounded-xl shadow-sm">
                         <h2 className="text-lg font-semibold text-slate-800 mb-4">Atajos</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                            {/* FIX: Refactored map to explicitly pass props from the 'shortcut' object. The 'key' property is not a valid prop for ShortcutButton and was causing a TypeScript error when spreading. */}
+                            {/* Fix: Destructure shortcut props to avoid spreading the 'key' property, which is not a valid prop for ShortcutButton. */}
                             {shortcuts.map((shortcut) => (
                                 <ShortcutButton key={shortcut.key} to={shortcut.to} text={shortcut.text} icon={shortcut.icon} />
                             ))}

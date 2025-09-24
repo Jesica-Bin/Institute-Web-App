@@ -88,13 +88,13 @@ const StudentDrawer: React.FC<StudentDrawerProps> = ({ isOpen, setIsOpen, onLogo
                         <div>
                             <h3 className={`px-4 text-xs font-bold uppercase text-slate-400 mb-2 whitespace-nowrap transition-opacity ${isCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Menú</h3>
                             <div className="space-y-1">
-                                {/* FIX: Spreading props was causing a TypeScript error because the 'key' property is not part of the NavLinkItem's props. Explicitly passing props resolves this. */}
+                                {/* Fix: Explicitly pass props to NavLinkItem instead of spreading to avoid TypeScript errors. */}
                                 {navLinks.map((link) => <NavLinkItem key={link.to} to={link.to} text={link.text} icon={link.icon} />)}
                             </div>
                         </div>
                         <div>
                             <div className="space-y-1">
-                                {/* FIX: Spreading props was causing a TypeScript error because the 'key' property is not part of the NavLinkItem's props. Explicitly passing props resolves this. */}
+                                {/* Fix: Explicitly pass props to NavLinkItem instead of spreading to avoid TypeScript errors. */}
                                 {actionLinks.map((link) => <NavLinkItem key={link.to} to={link.to} text={link.text} icon={link.icon} />)}
                                 <a
                                     href="#"

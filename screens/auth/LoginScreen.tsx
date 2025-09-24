@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { EyeIcon, EyeSlashIcon } from '../../components/Icons';
 
 type UserRole = 'preceptor' | 'student';
 
@@ -33,6 +34,8 @@ const LoginFormContent: React.FC<{
     setRole: (role: UserRole) => void;
     onLogin: (role: UserRole) => void;
 }> = ({ role, setRole, onLogin }) => {
+    const [showPassword, setShowPassword] = useState(false);
+    
     return (
         <>
             <form onSubmit={(e) => { e.preventDefault(); onLogin(role) }} className="space-y-4">
@@ -42,7 +45,22 @@ const LoginFormContent: React.FC<{
                 </div>
                 <div>
                     <label htmlFor="password" className="block text-sm font-medium text-slate-700">Contraseña</label>
-                    <input type="password" id="password" defaultValue="password" className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+                    <div className="relative mt-1">
+                        <input 
+                            type={showPassword ? 'text' : 'password'} 
+                            id="password" 
+                            defaultValue="Str0ngP@ssw0rd!" 
+                            className="block w-full px-3 py-2 pr-10 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" 
+                        />
+                        <button 
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                        >
+                            {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                        </button>
+                    </div>
                 </div>
                 <div className="text-right text-sm">
                     <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">¿Olvidaste tu contraseña?</Link>
