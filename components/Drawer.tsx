@@ -88,14 +88,14 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, setIsOpen, onLogout, isCollapse
                         <div>
                             <h3 className={`px-4 text-xs font-bold uppercase text-slate-400 mb-2 whitespace-nowrap transition-opacity ${isCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Menú</h3>
                             <div className="space-y-1">
-                                {/* Fix: Explicitly pass props to NavLinkItem instead of spreading to avoid TypeScript errors. */}
-                                {navLinks.map((link) => <NavLinkItem key={link.to} to={link.to} text={link.text} icon={link.icon} />)}
+                                {/* Fix: Destructure props from link object to pass them explicitly to NavLinkItem. */}
+                                {navLinks.map(({ to, text, icon }) => <NavLinkItem key={to} to={to} text={text} icon={icon} />)}
                             </div>
                         </div>
                         <div>
                             <div className="space-y-1">
-                                {/* Fix: Explicitly pass props to NavLinkItem instead of spreading to avoid TypeScript errors. */}
-                                {actionLinks.map((link) => <NavLinkItem key={link.to} to={link.to} text={link.text} icon={link.icon} />)}
+                                {/* Fix: Destructure props from link object to pass them explicitly to NavLinkItem. */}
+                                {actionLinks.map(({ to, text, icon }) => <NavLinkItem key={to} to={to} text={text} icon={icon} />)}
                                 <a
                                     href="#"
                                     onClick={(e) => { e.preventDefault(); onLogout(); }}

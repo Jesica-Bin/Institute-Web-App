@@ -459,9 +459,9 @@ const StudentDashboardScreen: React.FC = () => {
                     <div className="bg-white p-5 rounded-xl shadow-sm">
                         <h2 className="text-lg font-semibold text-slate-800 mb-4">Atajos</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                            {/* Fix: Destructure shortcut props to avoid spreading the 'key' property, which is not a valid prop for ShortcutButton. */}
-                            {shortcuts.map((shortcut) => (
-                                <ShortcutButton key={shortcut.key} to={shortcut.to} text={shortcut.text} icon={shortcut.icon} />
+                            {/* Fix: Destructured shortcut to pass props explicitly and avoid spreading an unwanted 'key' prop. */}
+                            {shortcuts.map(({ key, to, text, icon }) => (
+                                <ShortcutButton key={key} to={to} text={text} icon={icon} />
                             ))}
                             <button 
                                 onClick={() => setShortcutsModalOpen(true)}
