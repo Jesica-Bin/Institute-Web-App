@@ -459,7 +459,7 @@ const StudentDashboardScreen: React.FC = () => {
                     <div className="bg-white p-5 rounded-xl shadow-sm">
                         <h2 className="text-lg font-semibold text-slate-800 mb-4">Atajos</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                            {/* FIX: Destructured the shortcut object to pass only the expected props to ShortcutButton. The 'key' property is a reserved prop used by React for list rendering and should not be passed to child components directly, which causes a TypeScript error if not defined in the component's props. */}
+                            {/* FIX: Destructured the shortcut object to avoid spreading the `key` property. The `key` prop is reserved by React and should not be passed down to child components. */}
                             {shortcuts.map(({ key, to, text, icon }) => (
                                 <ShortcutButton key={key} to={to} text={text} icon={icon} />
                             ))}

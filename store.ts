@@ -1,5 +1,5 @@
 import { AttendanceStatus, CalendarEvent, CalendarEventType, ClassStatus, SubjectDetail, Notification, StudentRequest, RequestStatus } from './types';
-import { mockCalendarEvents, mockUser, mockStudentUser, mockOfficialCommunications, mockRequests } from './data';
+import { mockCalendarEvents, mockUser, mockStudentUser, mockOfficialCommunications, mockRequests, mockSystemNotifications } from './data';
 
 // --- Centralized In-Memory Store ---
 const _store = {
@@ -295,6 +295,17 @@ export const getOfficialCommunications = (): Notification[] => {
 };
 export const addOfficialCommunication = (notification: Notification) => {
     _store.officialCommunications.unshift(notification);
+};
+
+// System Notifications
+export const getSystemNotifications = (): Notification[] => {
+    return mockSystemNotifications;
+};
+
+// Unread Check
+export const hasUnreadNotifications = (): boolean => {
+    const allNotifications = [...getSystemNotifications(), ...getOfficialCommunications()];
+    return allNotifications.some(notification => !notification.read);
 };
 
 // Student Requests

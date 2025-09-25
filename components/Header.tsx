@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MenuIcon, ArrowLeftIcon, BellIcon } from './Icons';
+import { hasUnreadNotifications } from '../store';
 
 interface HeaderProps {
     title: string;
@@ -13,6 +14,11 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ title, onMenuClick, showBackButton, showAvatar, isDashboard, backPath }) => {
     const navigate = useNavigate();
+    const [hasUnread, setHasUnread] = useState(false);
+
+    useEffect(() => {
+        setHasUnread(hasUnreadNotifications());
+    }, []);
 
     const handleBackClick = () => {
         // Navigate to a specific, deterministic path instead of relying on browser history.
@@ -52,8 +58,9 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick, showBackButton, sho
                 {/* Right side: icon/avatar or placeholder */}
                 <div className="flex justify-end">
                     {isDashboard ? (
-                         <Link to="/notificaciones" className={iconButtonClasses}>
+                         <Link to="/notificaciones" className={`relative ${iconButtonClasses}`}>
                             <BellIcon className="w-6 h-6 md:w-7 md:h-7" />
+                            {hasUnread && <span className="absolute top-2 right-2 block w-2.5 h-2.5 bg-red-500 rounded-full" />}
                          </Link>
                     ) : showAvatar ? (
                         <div className="w-10 h-10 bg-green-400 rounded-full flex items-center justify-center font-bold text-indigo-900">J</div>

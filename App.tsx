@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate, useMatch, Link } from 'react-router-dom';
 import { mockSubjectDetails, mockCertificateRequests } from './data';
 import { BellIcon } from './components/Icons';
+import { hasUnreadNotifications } from './store';
 
 // Layout Components
 import Header from './components/Header';
@@ -72,6 +73,7 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
     const [isDrawerOpen, setDrawerOpen] = useState(false);
     const location = useLocation();
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+    const [hasUnread, setHasUnread] = useState(false);
 
     useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
@@ -80,6 +82,10 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
     }, []);
 
     useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
+
+    useEffect(() => {
+        setHasUnread(hasUnreadNotifications());
+    }, [location.pathname]);
 
     const { career: dynamicTitle } = location.state || {};
     const isDashboard = location.pathname === '/';
@@ -158,8 +164,9 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
                 )}
                 {isDesktop && isDashboard && (
                     <div className="absolute top-6 right-6 z-10">
-                        <Link to="/notificaciones" className="p-2 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-colors">
+                        <Link to="/notificaciones" className="relative p-2 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-colors">
                             <BellIcon className="w-7 h-7" />
+                            {hasUnread && <span className="absolute top-2 right-2 block w-2.5 h-2.5 bg-red-500 rounded-full" />}
                         </Link>
                     </div>
                 )}
@@ -202,6 +209,7 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
     const [isDrawerOpen, setDrawerOpen] = useState(false);
     const location = useLocation();
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+    const [hasUnread, setHasUnread] = useState(false);
 
     useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
@@ -210,6 +218,10 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
     }, []);
 
     useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
+
+    useEffect(() => {
+        setHasUnread(hasUnreadNotifications());
+    }, [location.pathname]);
 
     const isDashboard = location.pathname === '/';
 
@@ -319,8 +331,9 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
                 )}
                  {isDesktop && isDashboard && (
                     <div className="absolute top-6 right-6 z-10">
-                        <Link to="/notificaciones" className="p-2 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-colors">
+                        <Link to="/notificaciones" className="relative p-2 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-colors">
                             <BellIcon className="w-7 h-7" />
+                            {hasUnread && <span className="absolute top-2 right-2 block w-2.5 h-2.5 bg-red-500 rounded-full" />}
                         </Link>
                     </div>
                 )}
