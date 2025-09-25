@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockRequests } from '../data';
+import { getRequests } from '../store';
 import { RequestStatus, StudentRequest } from '../types';
 import { ChevronRightIcon, DocumentTextIcon } from '../components/Icons';
 import RequestDetailScreen from './RequestDetailScreen';
@@ -28,6 +28,7 @@ const DetailPlaceholder: React.FC<{ icon: React.ElementType; message: string; }>
 
 const RequestsScreen: React.FC = () => {
     const navigate = useNavigate();
+    const requests = getRequests();
     const [selectedRequest, setSelectedRequest] = useState<StudentRequest | null>(null);
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
 
@@ -38,10 +39,15 @@ const RequestsScreen: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (isDesktop && mockRequests.length > 0 && !selectedRequest) {
-            setSelectedRequest(mockRequests[0]);
+        if (isDesktop) {
+            const selectionInList = requests.some(r => r.id === selectedRequest?.id);
+            if (requests.length > 0 && !selectionInList) {
+                setSelectedRequest(requests[0]);
+            } else if (requests.length === 0) {
+                setSelectedRequest(null);
+            }
         }
-    }, [isDesktop]);
+    }, [isDesktop, requests, selectedRequest]);
 
     const handleRequestClick = (request: StudentRequest) => {
         if (isDesktop) {
@@ -56,7 +62,7 @@ const RequestsScreen: React.FC = () => {
             <div className="lg:col-span-1 space-y-4">
                 <div className="bg-white rounded-lg shadow-sm">
                     <ul className="divide-y divide-slate-100">
-                        {mockRequests.map(request => (
+                        {requests.map(request => (
                             <li key={request.id}>
                                 <button
                                     onClick={() => handleRequestClick(request)}

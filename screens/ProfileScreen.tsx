@@ -22,19 +22,25 @@ const ProfileScreen: React.FC = () => {
             setIsDirty(false);
         }
     }, [email, phone]);
-
+    
     const handleSaveChanges = (e: React.FormEvent) => {
         e.preventDefault();
-        alert(`Cambios guardados:\nEmail: ${email}\nTeléfono: ${phone}`);
-        // Here you would typically make an API call
-        // For now, we'll just reset the dirty state
+        
+        // Mock update of other user data
+        mockUser.email = email;
+        mockUser.phone = phone;
+
+        alert(`Cambios guardados:\nEmail: ${email}\nTeléfono: ${phone}.`);
+        
         setIsDirty(false);
     };
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex flex-col items-center space-y-4">
-                <UserCircleIcon className="w-24 h-24 text-slate-300" />
+                <div className="w-24 h-24 rounded-full bg-slate-200">
+                    <UserCircleIcon className="w-full h-full text-slate-400" />
+                </div>
                 <div>
                     <h1 className="text-2xl font-bold text-center">{mockUser.name}</h1>
                     <p className="text-slate-500 text-center">Preceptora</p>

@@ -1,5 +1,13 @@
-import { AttendanceStatus, CalendarEvent, CalendarEventType, SubjectDetail } from './types';
-import { mockCalendarEvents } from './data';
+import { AttendanceStatus, CalendarEvent, CalendarEventType, ClassStatus, SubjectDetail, Notification, StudentRequest, RequestStatus } from './types';
+import { mockCalendarEvents, mockUser, mockStudentUser, mockOfficialCommunications, mockRequests } from './data';
+
+// --- Centralized In-Memory Store ---
+const _store = {
+  holidaysProcessed: false,
+  officialCommunications: [...mockOfficialCommunications],
+  requests: [...mockRequests],
+  calendarEvents: [...mockCalendarEvents],
+};
 
 // Structure: { "YYYY-MM-DD": { "Subject Name": { studentId: status } } }
 type AttendanceStoreData = {
@@ -134,7 +142,7 @@ export const calculateTotalClassesForSubject = (
     const winterBreakEnd = winterBreakEndDate ? new Date(winterBreakEndDate + 'T00:00:00') : null;
 
     const holidays = new Set(
-        mockCalendarEvents
+        _store.calendarEvents
             .filter(e => e.type === CalendarEventType.HOLIDAY || e.type === CalendarEventType.INSTITUTIONAL)
             .map(e => e.date)
     );
@@ -278,3 +286,45 @@ export const clearStudentNotification = (date: string, subject: string, studentI
 export const getFullAttendanceStore = (): AttendanceStoreData => {
     return attendanceStore;
 }
+
+// --- Synced State Management ---
+
+// Official Communications
+export const getOfficialCommunications = (): Notification[] => {
+    return _store.officialCommunications.sort((a, b) => b.id - a.id);
+};
+export const addOfficialCommunication = (notification: Notification) => {
+    _store.officialCommunications.unshift(notification);
+};
+
+// Student Requests
+export const getRequests = (): StudentRequest[] => {
+    return _store.requests.sort((a, b) => b.id - a.id);
+};
+export const addRequest = (request: StudentRequest) => {
+    _store.requests.unshift(request);
+};
+
+// Calendar Events
+export const getCalendarEvents = (): CalendarEvent[] => {
+    if (!_store.holidaysProcessed) {
+        // This is a simplified, one-time processing step for the mock data
+        const allHolidayDates = new Set(
+            _store.calendarEvents
+                .filter(e => e.type === CalendarEventType.HOLIDAY || e.type === CalendarEventType.INSTITUTIONAL)
+                .map(e => e.date)
+        );
+        _store.calendarEvents = _store.calendarEvents.map(event => {
+            if (event.type === CalendarEventType.CLASS && allHolidayDates.has(event.date)) {
+                // FIX: Use enum member for status to match the 'ClassStatus' type.
+                return { ...event, status: ClassStatus.CANCELED };
+            }
+            return event;
+        });
+        _store.holidaysProcessed = true; // Mark as processed
+    }
+    return _store.calendarEvents.sort((a,b) => a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || ''));
+};
+export const setCalendarEvents = (events: CalendarEvent[]) => {
+    _store.calendarEvents = events;
+};

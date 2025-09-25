@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate, useMatch, Link } from 'react-router-dom';
-import { mockSubjectDetails } from './data';
+import { mockSubjectDetails, mockCertificateRequests } from './data';
 import { BellIcon } from './components/Icons';
 
 // Layout Components
@@ -29,6 +29,7 @@ import EventDetailScreen from './screens/EventDetailScreen';
 import CreateCommunicationScreen from './screens/CreateCommunicationScreen';
 import NotificationDetailScreen from './screens/NotificationDetailScreen';
 import SplashScreen from './screens/SplashScreen';
+import ChangePasswordScreen from './screens/ChangePasswordScreen';
 
 // Auth Screens
 import LoginScreen from './screens/auth/LoginScreen';
@@ -50,6 +51,7 @@ import StudentSchoolCalendarScreen from './screens/student/SchoolCalendarScreen'
 import EventAttendanceScreen from './screens/student/EventAttendanceScreen';
 import CertificatesScreen from './screens/student/CertificatesScreen';
 import NewCertificateRequestScreen from './screens/student/NewCertificateRequestScreen';
+import CertificateDetailScreen from './screens/student/CertificateDetailScreen';
 import SuggestionsScreen from './screens/student/SuggestionsScreen';
 import NewSuggestionScreen from './screens/student/NewSuggestionScreen';
 import SuggestionDetailScreen from './screens/student/SuggestionDetailScreen';
@@ -101,6 +103,7 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
         '/estudiante-perfil': 'Perfil del Estudiante',
         '/configuracion': 'Configuración',
         '/ayuda': 'Ayuda y Feedback',
+        '/cambiar-contrasena': 'Cambiar Contraseña',
     };
 
     let title = isDashboard ? '' : (screenTitles[location.pathname] || 'Inicio');
@@ -116,6 +119,7 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
     const matchCrearComunicado = useMatch('/crear-comunicado');
     const matchTomarAsistencia = useMatch('/tomar-asistencia');
     const matchNotificacionDetalle = useMatch('/notificacion-detalle/:notificationId');
+    const matchChangePassword = useMatch('/cambiar-contrasena');
     
     let backPath = '/';
     if (matchSolicitudDetalle) backPath = '/solicitudes';
@@ -126,6 +130,7 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
     else if (matchCrearComunicado) backPath = '/notificaciones';
     else if (matchNotificacionDetalle) backPath = '/notificaciones';
     else if (matchTomarAsistencia) backPath = '/asistencia';
+    else if (matchChangePassword) backPath = '/configuracion';
 
 
     const showBackButton = !isDashboard;
@@ -178,6 +183,7 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
                         <Route path="/perfil" element={<ProfileScreen />} />
                         <Route path="/estudiante-perfil" element={<StudentProfileScreen />} />
                         <Route path="/configuracion" element={<SettingsScreen />} />
+                        <Route path="/cambiar-contrasena" element={<ChangePasswordScreen />} />
                         <Route path="/ayuda" element={<HelpScreen />} />
                     </Routes>
                 </div>
@@ -218,12 +224,14 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
         '/notificaciones': 'Notificaciones',
         '/notificacion-detalle/:notificationId': 'Detalle de Notificación',
         '/certificados': 'Certificados y Constancias',
+        '/certificados/:requestId': 'Detalle de Solicitud',
         '/solicitar-certificado': 'Solicitar Certificado',
         '/sugerencias': 'Sugerencias y Reclamos',
         '/nueva-sugerencia': 'Nuevo Envío',
         '/sugerencia-detalle/:suggestionId': 'Detalle de Envío',
         '/perfil': 'Mi Perfil',
         '/configuracion': 'Configuración',
+        '/cambiar-contrasena': 'Cambiar Contraseña',
         '/ayuda': 'Ayuda y Feedback',
         '/calendario-escolar': 'Calendario Institucional',
         '/eventos-qr': 'Asistencia a Eventos',
@@ -236,11 +244,13 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
     const matchJustificarAusencia = useMatch('/justificar-ausencia');
     const matchJustificarAusenciaDetalle = useMatch('/justificar-ausencia-detalle');
     const matchJustificacionEstado = useMatch('/justificacion-estado');
+    const matchCertificadoDetalle = useMatch('/certificados/:requestId');
     const matchSolicitarCertificado = useMatch('/solicitar-certificado');
     const matchSugerenciaDetalle = useMatch('/sugerencia-detalle/:suggestionId');
     const matchNuevaSugerencia = useMatch('/nueva-sugerencia');
     const matchNotificacionDetalle = useMatch('/notificacion-detalle/:notificationId');
     const matchEventosQR = useMatch('/eventos-qr');
+    const matchChangePassword = useMatch('/cambiar-contrasena');
 
     const titleMatches = Object.keys(screenTitles).reduce((acc, path) => {
         acc[path] = useMatch(path);
@@ -249,33 +259,25 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
 
     // --- Deterministic Back Path Logic ---
     let backPath = '/';
-    if (matchMateriaDetalle) {
-        backPath = '/mis-materias';
-    } else if (matchAsistencia) {
+    if (matchMateriaDetalle) backPath = '/mis-materias';
+    else if (matchAsistencia) {
         if (location.state?.from === '/materia-detalle' && location.state?.subjectId) {
             backPath = `/materia-detalle/${location.state.subjectId}`;
         } else {
             backPath = '/';
         }
-    } else if (matchAsistenciaRegistro) {
-        backPath = '/asistencia';
-    } else if (matchJustificarAusencia) {
-        backPath = '/asistencia';
-    } else if (matchJustificarAusenciaDetalle) {
-        backPath = '/justificar-ausencia';
-    } else if (matchJustificacionEstado) {
-        backPath = '/justificar-ausencia';
-    } else if (matchSolicitarCertificado) {
-        backPath = '/certificados';
-    } else if (matchSugerenciaDetalle) {
-        backPath = '/sugerencias';
-    } else if (matchNuevaSugerencia) {
-        backPath = '/sugerencias';
-    } else if (matchNotificacionDetalle) {
-        backPath = '/notificaciones';
-    } else if (matchEventosQR) {
-        backPath = '/asistencia';
-    }
+    } 
+    else if (matchAsistenciaRegistro) backPath = '/asistencia';
+    else if (matchJustificarAusencia) backPath = '/asistencia';
+    else if (matchJustificarAusenciaDetalle) backPath = '/justificar-ausencia';
+    else if (matchJustificacionEstado) backPath = '/justificar-ausencia';
+    else if (matchCertificadoDetalle) backPath = '/certificados';
+    else if (matchSolicitarCertificado) backPath = '/certificados';
+    else if (matchSugerenciaDetalle) backPath = '/sugerencias';
+    else if (matchNuevaSugerencia) backPath = '/sugerencias';
+    else if (matchNotificacionDetalle) backPath = '/notificaciones';
+    else if (matchEventosQR) backPath = '/asistencia';
+    else if (matchChangePassword) backPath = '/configuracion';
 
     // --- Title Logic ---
     let title: string;
@@ -285,6 +287,9 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
     } else if (matchMateriaDetalle?.params.subjectId) {
         const subject = mockSubjectDetails[matchMateriaDetalle.params.subjectId];
         title = subject ? subject.name : 'Detalle de Materia';
+    } else if (matchCertificadoDetalle?.params.requestId) {
+        const request = mockCertificateRequests.find(r => r.id.toString() === matchCertificadoDetalle?.params.requestId);
+        title = request ? request.type : 'Detalle de Solicitud';
     } else {
         const currentRoute = Object.keys(screenTitles).find(key => titleMatches[key] !== null);
         title = currentRoute ? screenTitles[currentRoute] : 'Inicio';
@@ -332,12 +337,14 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
                         <Route path="/notificaciones" element={<NotificationsScreen userRole="student" />} />
                         <Route path="/notificacion-detalle/:notificationId" element={<NotificationDetailScreen />} />
                         <Route path="/certificados" element={<CertificatesScreen />} />
+                        <Route path="/certificados/:requestId" element={<CertificateDetailScreen />} />
                         <Route path="/solicitar-certificado" element={<NewCertificateRequestScreen />} />
                         <Route path="/sugerencias" element={<SuggestionsScreen />} />
                         <Route path="/nueva-sugerencia" element={<NewSuggestionScreen />} />
                         <Route path="/sugerencia-detalle/:suggestionId" element={<SuggestionDetailScreen />} />
                         <Route path="/perfil" element={<StudentMyProfileScreen />} />
                         <Route path="/configuracion" element={<SettingsScreen />} />
+                        <Route path="/cambiar-contrasena" element={<ChangePasswordScreen />} />
                         <Route path="/ayuda" element={<HelpScreen />} />
                         <Route path="/calendario-escolar" element={<StudentSchoolCalendarScreen />} />
                         <Route path="/eventos-qr" element={<EventAttendanceScreen />} />

@@ -131,20 +131,41 @@ const AlertModal: React.FC<{
 const TakeAttendanceScreen: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { career } = location.state || { career: null };
+    const { career: preselectedCareer, year: preselectedYear, subject: preselectedSubject } = location.state || {};
+
+    const [selectedCareer, setSelectedCareer] = useState(preselectedCareer || '');
+    const [selectedYear, setSelectedYear] = useState(preselectedYear || '');
+    const [selectedSubject, setSelectedSubject] = useState(preselectedSubject || '');
     
-    const [selectedYear, setSelectedYear] = useState('');
-    const [selectedSubject, setSelectedSubject] = useState('');
+    const [availableYears, setAvailableYears] = useState<string[]>(mockYears);
     const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
     const [students, setStudents] = useState<StudentAttendance[]>([]);
     const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
     const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
+    const isPrefilled = !!(preselectedCareer && preselectedYear && preselectedSubject);
+
     useEffect(() => {
-        if (career && selectedYear && selectedSubject) {
+        if (selectedCareer) {
+            setAvailableYears(Object.keys(courseData[selectedCareer as keyof typeof courseData] || {}));
+        } else {
+            setAvailableYears(mockYears);
+        }
+    }, [selectedCareer]);
+
+    useEffect(() => {
+        if (selectedCareer && selectedYear) {
+            setAvailableSubjects(courseData[selectedCareer as keyof typeof courseData]?.[selectedYear] || []);
+        } else {
+            setAvailableSubjects([]);
+        }
+    }, [selectedCareer, selectedYear]);
+
+    useEffect(() => {
+        if (selectedCareer && selectedYear && selectedSubject) {
             const filteredStudents = mockStudents
-                .filter(s => s.carrera === career)
+                .filter(s => s.carrera === selectedCareer)
                 .map(s => ({ ...s, status: AttendanceStatus.UNMARKED }));
 
             const todaysAttendance = getTodayAttendanceForSubject(selectedSubject);
@@ -162,13 +183,12 @@ const TakeAttendanceScreen: React.FC = () => {
         } else {
             setStudents([]);
         }
-    }, [career, selectedYear, selectedSubject]);
+    }, [selectedCareer, selectedYear, selectedSubject]);
 
     const handleStatusChange = (studentId: number, newStatus: AttendanceStatus) => {
         setStudents(prevStudents =>
             prevStudents.map(s => {
                 if (s.id === studentId) {
-                    // Toggle off if the same button is clicked
                     return { ...s, status: s.status === newStatus ? AttendanceStatus.UNMARKED : newStatus };
                 }
                 return s;
@@ -177,14 +197,14 @@ const TakeAttendanceScreen: React.FC = () => {
     };
 
     const handleSelectCareer = (selectedCareer: string) => {
-        navigate('/tomar-asistencia', { state: { career: selectedCareer } });
+        setSelectedCareer(selectedCareer);
+        setSelectedYear('');
+        setSelectedSubject('');
     };
 
     const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const year = e.target.value;
-        setSelectedYear(year);
+        setSelectedYear(e.target.value);
         setSelectedSubject('');
-        setAvailableSubjects(year ? (courseData[career as keyof typeof courseData]?.[year] || []) : []);
     };
     
     const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -253,11 +273,11 @@ const TakeAttendanceScreen: React.FC = () => {
         navigate('/asistencia');
     };
 
-    if (!career) {
+    if (!selectedCareer) {
         return (
             <div className="space-y-4 max-w-4xl mx-auto">
                 <div className="bg-white p-4 rounded-lg shadow-sm">
-                    <p className="text-sm text-slate-500 mt-1 mb-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam eget felis eget nunc lobortis.</p>
+                    <p className="text-sm text-slate-500 mt-1 mb-4">Selecciona una carrera para comenzar a tomar asistencia.</p>
                     <div className="space-y-2">
                         {mockCareers.map(c => (
                             <button 
@@ -275,24 +295,38 @@ const TakeAttendanceScreen: React.FC = () => {
         );
     }
 
+    const selectClass = "w-full p-2 bg-white text-slate-800 border border-slate-300 rounded-md disabled:bg-slate-100 disabled:cursor-not-allowed";
+
     return (
         <>
             <div className="space-y-4 max-w-4xl mx-auto">
                 <div className="bg-white p-4 rounded-lg shadow-sm">
-                    <p className="text-sm text-slate-500">Seleccione el año y la materia para ver la lista de estudiantes.</p>
+                    <p className="text-sm text-slate-500 mb-2">
+                        {isPrefilled ? `Tomando asistencia para ${selectedSubject}.` : 'Seleccione el año y la materia para ver la lista de estudiantes.'}
+                    </p>
+                     <select 
+                        value={selectedCareer}
+                        onChange={(e) => handleSelectCareer(e.target.value)}
+                        disabled={isPrefilled}
+                        className={`${selectClass} mb-2`}
+                     >
+                        <option value="">Seleccione una carrera</option>
+                        {mockCareers.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
                      <select 
                         value={selectedYear}
                         onChange={handleYearChange}
-                        className="mt-2 w-full p-2 bg-white text-slate-800 border border-slate-300 rounded-md"
+                        disabled={isPrefilled}
+                        className={`${selectClass} mb-2`}
                      >
                         <option value="">Seleccione un año</option>
-                        {mockYears.map(y => <option key={y} value={y}>{y}</option>)}
+                        {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                     <select 
                         value={selectedSubject}
                         onChange={handleSubjectChange}
-                        disabled={!selectedYear || availableSubjects.length === 0}
-                        className="mt-2 w-full p-2 bg-white text-slate-800 border border-slate-300 rounded-md disabled:bg-slate-100 disabled:cursor-not-allowed"
+                        disabled={isPrefilled || !selectedYear || availableSubjects.length === 0}
+                        className={selectClass}
                     >
                         <option value="">Seleccione una materia</option>
                         {availableSubjects.map(s => <option key={s} value={s}>{s}</option>)}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { mockSystemNotifications, mockOfficialCommunications } from '../data';
+import { useNavigate, Link } from 'react-router-dom';
+import { mockSystemNotifications } from '../data';
+import { getOfficialCommunications } from '../store';
 import { Notification, NotificationType } from '../types';
 import { MegaphoneIcon, WrenchScrewdriverIcon, PlusIcon, ChevronRightIcon } from '../components/Icons';
 import NotificationDetailScreen from './NotificationDetailScreen';
@@ -31,11 +32,10 @@ const TabButton = ({ label, active, onClick }: { label: string, active: boolean,
 
 const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ userRole }) => {
     const [activeTab, setActiveTab] = useState<Tab>('system');
-    const [officialCommunications, setOfficialCommunications] = useState<Notification[]>(mockOfficialCommunications);
+    const officialCommunications = getOfficialCommunications();
     const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
     const navigate = useNavigate();
-    const location = useLocation();
 
     const notificationsToShow = activeTab === 'system' ? mockSystemNotifications : officialCommunications;
 
@@ -44,15 +44,6 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ userRole }) =
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-
-    useEffect(() => {
-        const newCommunication = location.state?.newCommunication as Notification | undefined;
-        if (newCommunication) {
-            setOfficialCommunications(prev => [newCommunication, ...prev]);
-            setActiveTab('official');
-            window.history.replaceState({}, document.title);
-        }
-    }, [location.state]);
     
     useEffect(() => {
         if (isDesktop && notificationsToShow.length > 0) {
@@ -64,7 +55,7 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ userRole }) =
         } else if (isDesktop && notificationsToShow.length === 0) {
             setSelectedNotification(null);
         }
-    }, [isDesktop, notificationsToShow, selectedNotification]);
+    }, [isDesktop, notificationsToShow, selectedNotification, activeTab]);
 
     const handleNotificationClick = (notification: Notification) => {
         if (isDesktop) {

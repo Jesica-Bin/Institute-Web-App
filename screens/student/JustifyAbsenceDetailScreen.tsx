@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AbsenceToJustify } from '../../types';
+import { AbsenceToJustify, StudentRequest, RequestStatus } from '../../types';
 import { CloudArrowUpIcon, CheckBadgeIcon } from '../../components/Icons';
+import { addRequest } from '../../store';
+import { mockStudentUser } from '../../data';
 
 const JustifyAbsenceDetailScreen: React.FC = () => {
     const navigate = useNavigate();
@@ -31,6 +33,17 @@ const JustifyAbsenceDetailScreen: React.FC = () => {
             alert('Por favor, selecciona un certificado para subir.');
             return;
         }
+        
+        // Create a new request for the preceptor
+        const newRequest: StudentRequest = {
+            id: Date.now(),
+            title: `Justificación: ${absence.subject}`,
+            studentName: mockStudentUser.name,
+            date: new Date().toISOString().split('T')[0],
+            status: RequestStatus.PENDING,
+        };
+        addRequest(newRequest);
+
         setIsSubmitted(true);
     };
 

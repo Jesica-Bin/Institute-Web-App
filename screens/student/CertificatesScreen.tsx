@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { mockCertificateRequests } from '../../data';
 import { CertificateStatus } from '../../types';
 import { DocumentTextIcon } from '../../components/Icons';
@@ -18,10 +18,15 @@ const StatusBadge = ({ status }: { status: CertificateStatus }) => {
 };
 
 const CertificatesScreen: React.FC = () => {
+    const navigate = useNavigate();
 
     const isExpired = (expiryDate: string | undefined): boolean => {
         if (!expiryDate) return false;
         return new Date(expiryDate) < new Date();
+    };
+
+    const handleRequestClick = (requestId: number) => {
+        navigate(`/certificados/${requestId}`);
     };
 
     return (
@@ -42,19 +47,21 @@ const CertificatesScreen: React.FC = () => {
                  {mockCertificateRequests.length > 0 ? (
                     <ul className="divide-y divide-slate-100">
                         {mockCertificateRequests.map(req => (
-                            <li key={req.id} className="p-4 flex items-center justify-between hover:bg-slate-50">
-                                <div>
-                                    <p className="font-semibold">{req.type}</p>
-                                    <p className="text-sm text-slate-500">
-                                        Solicitado el: {new Date(req.requestDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
-                                    </p>
-                                    {isExpired(req.expiryDate) && (
-                                         <p className="text-xs text-red-600 mt-1 font-semibold">
-                                            Vencido - Solicitar nuevamente
+                            <li key={req.id}>
+                                <button onClick={() => handleRequestClick(req.id)} className="w-full text-left p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                    <div>
+                                        <p className="font-semibold">{req.type}</p>
+                                        <p className="text-sm text-slate-500">
+                                            Solicitado el: {new Date(req.requestDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
                                         </p>
-                                    )}
-                                </div>
-                                <StatusBadge status={req.status} />
+                                        {isExpired(req.expiryDate) && (
+                                             <p className="text-xs text-red-600 mt-1 font-semibold">
+                                                Vencido - Solicitar nuevamente
+                                            </p>
+                                        )}
+                                    </div>
+                                    <StatusBadge status={req.status} />
+                                </button>
                             </li>
                         ))}
                     </ul>

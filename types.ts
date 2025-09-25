@@ -162,6 +162,7 @@ export interface CertificateRequest {
   requestDate: string;
   status: CertificateStatus;
   expiryDate?: string;
+  pdfUrl?: string;
 }
 
 export enum SuggestionStatus {

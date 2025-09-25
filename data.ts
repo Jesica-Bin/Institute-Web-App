@@ -11,7 +11,7 @@ export const mockUser = {
   name: 'Juana Pérez',
   email: 'juana.perez@instituto.edu.ar',
   phone: '11-3456-7890',
-  legajo: 'JP-12345',
+  legajo: 'JP-12345'
 };
 
 export const mockAgenda: AgendaItem[] = [
@@ -417,8 +417,8 @@ export const mockCertificateTypes: string[] = [
 ];
 
 export const mockCertificateRequests: CertificateRequest[] = [
-  { id: 1, type: 'Certificado de Alumno Regular', requestDate: '2024-03-10', status: CertificateStatus.DELIVERED, expiryDate: '2024-05-10' },
-  { id: 2, type: 'Constancia de Examen', requestDate: '2024-05-28', status: CertificateStatus.READY },
+  { id: 1, type: 'Certificado de Alumno Regular', requestDate: '2024-03-10', status: CertificateStatus.DELIVERED, expiryDate: '2024-05-10', pdfUrl: '/sample.pdf' },
+  { id: 2, type: 'Constancia de Examen', requestDate: '2024-05-28', status: CertificateStatus.READY, pdfUrl: '/sample.pdf' },
   { id: 3, type: 'Certificado Analítico Parcial', requestDate: '2024-06-02', status: CertificateStatus.PENDING },
 ];
 

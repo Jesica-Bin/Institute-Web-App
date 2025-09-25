@@ -48,6 +48,12 @@ const StudentDrawer: React.FC<StudentDrawerProps> = ({ isOpen, setIsOpen, onLogo
         );
     };
 
+     const UserAvatar = () => (
+        <div className="w-10 h-10 rounded-full flex-shrink-0 bg-slate-200">
+            <UserCircleIcon className="w-full h-full text-slate-400" />
+        </div>
+    );
+
     return (
         <>
             <div
@@ -64,7 +70,7 @@ const StudentDrawer: React.FC<StudentDrawerProps> = ({ isOpen, setIsOpen, onLogo
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between p-4 border-b border-slate-200 h-[69px]">
                         <div className={`flex items-center space-x-3 overflow-hidden flex-1 transition-opacity duration-300 ${isCollapsed ? 'lg:opacity-0' : 'lg:opacity-100'}`}>
-                            <UserCircleIcon className="w-10 h-10 text-slate-400 flex-shrink-0" />
+                            <UserAvatar />
                             <div className="whitespace-nowrap">
                                 <h2 className="font-semibold">{mockStudentUser.name}</h2>
                                 <p className="text-xs text-slate-500">Estudiante</p>
@@ -88,13 +94,13 @@ const StudentDrawer: React.FC<StudentDrawerProps> = ({ isOpen, setIsOpen, onLogo
                         <div>
                             <h3 className={`px-4 text-xs font-bold uppercase text-slate-400 mb-2 whitespace-nowrap transition-opacity ${isCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Menú</h3>
                             <div className="space-y-1">
-                                {/* Fix: Destructured props for NavLinkItem to prevent passing invalid props, resolving the type error. */}
+                                {/* FIX: Destructured props for NavLinkItem to prevent passing invalid props. The 'key' prop is reserved by React and should not be passed to child components directly. */}
                                 {navLinks.map(({ to, text, icon }) => <NavLinkItem key={to} to={to} text={text} icon={icon} />)}
                             </div>
                         </div>
                         <div>
                             <div className="space-y-1">
-                                {/* Fix: Destructured props for NavLinkItem to prevent passing invalid props, resolving the type error. */}
+                                {/* FIX: Destructured props for NavLinkItem to prevent passing invalid props. The 'key' prop is reserved by React and should not be passed to child components directly. */}
                                 {actionLinks.map(({ to, text, icon }) => <NavLinkItem key={to} to={to} text={text} icon={icon} />)}
                                 <a
                                     href="#"

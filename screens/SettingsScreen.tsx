@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { SunIcon, MoonIcon, TrashIcon } from '../components/Icons';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -45,9 +46,9 @@ const SettingsScreen: React.FC = () => {
             </SettingsSection>
 
             <SettingsSection title="Cuenta">
-                <button className="w-full text-left p-3 hover:bg-slate-50 rounded-md text-slate-700 transition-colors">
+                <Link to="/cambiar-contrasena" className="w-full text-left p-3 hover:bg-slate-50 rounded-md text-slate-700 transition-colors block">
                     Cambiar contraseña
-                </button>
+                </Link>
                  <button className="w-full text-left p-3 flex items-center space-x-2 hover:bg-red-50 rounded-md text-red-600 font-semibold transition-colors">
                     <TrashIcon className="w-5 h-5" />
                     <span>Eliminar cuenta</span>

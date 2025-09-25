@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mockCareers } from '../data';
 import { Notification, NotificationType } from '../types';
+import { addOfficialCommunication } from '../store';
 import { PaperAirplaneIcon, CloudArrowUpIcon, TrashIcon } from '../components/Icons';
 
 const CreateCommunicationScreen: React.FC = () => {
@@ -50,15 +51,13 @@ const CreateCommunicationScreen: React.FC = () => {
             title: title,
             description: `Destinatarios: ${target}. \n\n${description}`,
             time: 'Ahora mismo',
-            read: true, // It's "read" for the preceptor who sent it
+            read: false, 
             type: NotificationType.OFFICIAL,
             imageUrl: imagePreviewUrl || undefined,
         };
         
-        // In a real app, the object URL should not be passed directly.
-        // You would upload the file and get a permanent URL.
-        // For this mock, we pass it so the next screen can display it.
-        navigate('/notificaciones', { state: { newCommunication } });
+        addOfficialCommunication(newCommunication);
+        navigate('/notificaciones');
     };
 
     const handleBack = () => {
