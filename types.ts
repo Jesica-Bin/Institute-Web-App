@@ -228,4 +228,5 @@ export interface CalendarEvent {
     originalDate?: string; // YYYY-MM-DD
     originalStartTime?: string; // HH:MM
     originalEndTime?: string; // HH:MM
+    isSwapped?: boolean;
 }

@@ -8,6 +8,7 @@ import {
     ArrowsRightLeftIcon,
     CheckBadgeIcon,
     CalendarDaysIcon,
+    ArrowUturnLeftIcon,
 } from '../components/Icons';
 import { setSchoolYear, getSchoolYear, fetchNationalHolidays } from '../store';
 
@@ -223,6 +224,11 @@ const SchoolCalendarScreen: React.FC = () => {
         setEvents(prev => prev.map(e => e.id === eventToCancel.id ? { ...e, status: ClassStatus.CANCELED } : e));
         setMenuState(null);
     };
+
+    const handleUncancelClass = (eventToRestore: CalendarEvent) => {
+        setEvents(prev => prev.map(e => e.id === eventToRestore.id ? { ...e, status: ClassStatus.NORMAL } : e));
+        setMenuState(null);
+    };
     
     const handleDeleteEvent = (eventToDelete: CalendarEvent) => {
         setEvents(prev => prev.filter(e => e.id !== eventToDelete.id));
@@ -242,27 +248,119 @@ const SchoolCalendarScreen: React.FC = () => {
             const index2 = newEvents.findIndex(e => e.id === event2.id);
 
             if (index1 !== -1 && index2 !== -1) {
-                const tempDate = newEvents[index1].date;
-                const tempStart = newEvents[index1].startTime;
-                const tempEnd = newEvents[index1].endTime;
-                newEvents[index1] = { ...newEvents[index1], date: newEvents[index2].date, startTime: newEvents[index2].startTime, endTime: newEvents[index2].endTime };
-                newEvents[index2] = { ...newEvents[index2], date: tempDate, startTime: tempStart, endTime: tempEnd };
+                 const original1 = {
+                    date: newEvents[index1].date,
+                    startTime: newEvents[index1].startTime,
+                    endTime: newEvents[index1].endTime,
+                };
+                const original2 = {
+                    date: newEvents[index2].date,
+                    startTime: newEvents[index2].startTime,
+                    endTime: newEvents[index2].endTime,
+                };
+
+                newEvents[index1] = {
+                    ...newEvents[index1],
+                    date: original2.date,
+                    startTime: original2.startTime,
+                    endTime: original2.endTime,
+                    isSwapped: true,
+                    originalDate: original1.date,
+                    originalStartTime: original1.startTime,
+                    originalEndTime: original1.endTime,
+                };
+
+                newEvents[index2] = {
+                    ...newEvents[index2],
+                    date: original1.date,
+                    startTime: original1.startTime,
+                    endTime: original1.endTime,
+                    isSwapped: true,
+                    originalDate: original2.date,
+                    originalStartTime: original2.startTime,
+                    originalEndTime: original2.endTime,
+                };
             }
             return newEvents;
         });
         setIsSwapModalOpen(false);
         setSwapCandidate(null);
     };
+
+    const handleRevertSwap = (eventToRevert: CalendarEvent) => {
+        if (!eventToRevert.isSwapped) return;
+
+        const otherSwappedEvent = events.find(e => 
+            e.isSwapped &&
+            e.date === eventToRevert.originalDate &&
+            e.startTime === eventToRevert.originalStartTime &&
+            e.originalDate === eventToRevert.date &&
+            e.originalStartTime === eventToRevert.startTime
+        );
+
+        if (!otherSwappedEvent) {
+            alert('No se pudo encontrar la clase correspondiente para revertir el intercambio. Es posible que ya haya sido modificada.');
+            setMenuState(null);
+            return;
+        }
+
+        setEvents(prevEvents => {
+            const newEvents = [...prevEvents];
+            const index1 = newEvents.findIndex(e => e.id === eventToRevert.id);
+            const index2 = newEvents.findIndex(e => e.id === otherSwappedEvent.id);
+
+            if (index1 !== -1 && index2 !== -1) {
+                newEvents[index1] = {
+                    ...newEvents[index1],
+                    date: eventToRevert.originalDate!,
+                    startTime: eventToRevert.originalStartTime,
+                    endTime: eventToRevert.originalEndTime,
+                    isSwapped: undefined,
+                    originalDate: undefined,
+                    originalStartTime: undefined,
+                    originalEndTime: undefined,
+                };
+                newEvents[index2] = {
+                    ...newEvents[index2],
+                    date: otherSwappedEvent.originalDate!,
+                    startTime: otherSwappedEvent.originalStartTime,
+                    endTime: otherSwappedEvent.originalEndTime,
+                    isSwapped: undefined,
+                    originalDate: undefined,
+                    originalStartTime: undefined,
+                    originalEndTime: undefined,
+                };
+            }
+            return newEvents;
+        });
+        setMenuState(null);
+    };
     
     // --- Sub-components ---
     const TimetableItem: React.FC<{ event: CalendarEvent }> = ({ event }) => {
         const isCanceled = event.status === ClassStatus.CANCELED;
+        const isSwapped = event.isSwapped;
+
+        const originalDateFormatted = event.originalDate 
+            ? new Date(event.originalDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })
+            : '';
+
+        const cardBg = isSwapped ? 'bg-amber-50 border border-amber-200' : 'bg-slate-100';
+
         return (
-            <div className={`w-full text-left bg-slate-100 p-3 rounded-lg mb-2 flex items-center justify-between space-x-2 transition-all ${isCanceled ? 'opacity-70' : ''}`}>
+            <div className={`w-full text-left ${cardBg} p-3 rounded-lg mb-2 flex items-start justify-between space-x-2 transition-all ${isCanceled ? 'opacity-70' : ''}`}>
                 <div className="flex-grow min-w-0">
-                    <p className={`font-semibold truncate ${isCanceled ? 'text-slate-500 line-through' : 'text-slate-800'}`}>{event.title}</p>
-                    <p className="text-sm text-slate-600 truncate">{event.course}</p>
+                    <div className="flex items-center space-x-2">
+                        {isSwapped && <ArrowsRightLeftIcon className="w-4 h-4 text-amber-600 flex-shrink-0" />}
+                        <p className={`font-semibold truncate ${isCanceled ? 'text-slate-500 line-through' : 'text-slate-800'}`}>{event.title}</p>
+                    </div>
+                    <p className="text-sm text-slate-600 truncate mt-1">{event.course}</p>
                     <p className="text-xs text-slate-500 truncate">{event.professor} - {event.classroom}</p>
+                    {isSwapped && (
+                        <p className="text-xs text-amber-700 mt-1">
+                            Originalmente: {originalDateFormatted} {event.originalStartTime}
+                        </p>
+                    )}
                 </div>
                 <div className="flex items-center space-x-2 flex-shrink-0">
                     {isCanceled ? (
@@ -430,6 +528,7 @@ const SchoolCalendarScreen: React.FC = () => {
     const ActionMenuItems: React.FC<{ event: CalendarEvent; itemClassName: string }> = ({ event, itemClassName }) => {
         const isClass = event.type === CalendarEventType.CLASS;
         const isCanceled = isClass && event.status === ClassStatus.CANCELED;
+        const isSwapped = event.isSwapped;
 
         const handleAction = (action: (event: CalendarEvent) => void) => {
             action(event);
@@ -440,11 +539,30 @@ const SchoolCalendarScreen: React.FC = () => {
                 {isClass && (
                     <>
                         <button onClick={() => handleAction(handleTakeAttendance)} disabled={event.attendanceTaken || isCanceled} className={`${itemClassName} hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed`}><CheckBadgeIcon className="w-5 h-5"/><span>Tomar asistencia</span></button>
-                        <button onClick={() => handleAction(handleStartSwap)} disabled={isCanceled} className={`${itemClassName} hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed`}><ArrowsRightLeftIcon className="w-5 h-5"/><span>Intercambiar clase</span></button>
-                        <button onClick={() => handleAction(handleCancelClass)} disabled={isCanceled} className={`${itemClassName} text-amber-600 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed`}><XMarkIcon className="w-5 h-5"/><span>Cancelar clase</span></button>
+                        {isSwapped ? (
+                            <button onClick={() => handleAction(handleRevertSwap)} className={`${itemClassName} hover:bg-slate-50`}><ArrowUturnLeftIcon className="w-5 h-5"/><span>Revertir Intercambio</span></button>
+                        ) : (
+                            <button onClick={() => handleAction(handleStartSwap)} disabled={isCanceled} className={`${itemClassName} hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed`}><ArrowsRightLeftIcon className="w-5 h-5"/><span>Intercambiar clase</span></button>
+                        )}
+                        {isCanceled ? (
+                             <button onClick={() => handleAction(handleUncancelClass)} className={`${itemClassName} text-green-600 hover:bg-green-50`}>
+                                <ArrowUturnLeftIcon className="w-5 h-5"/>
+                                <span>Descancelar clase</span>
+                            </button>
+                        ) : (
+                            <button onClick={() => handleAction(handleCancelClass)} className={`${itemClassName} text-amber-600 hover:bg-amber-50`}>
+                                <XMarkIcon className="w-5 h-5"/>
+                                <span>Cancelar clase</span>
+                            </button>
+                        )}
                     </>
                 )}
-                <button onClick={() => handleAction(handleDeleteEvent)} className={`${itemClassName} text-red-600 hover:bg-red-50`}><TrashIcon className="w-5 h-5"/><span>Eliminar</span></button>
+                {!isClass && (
+                    <button onClick={() => handleAction(handleDeleteEvent)} className={`${itemClassName} text-red-600 hover:bg-red-50`}>
+                        <TrashIcon className="w-5 h-5"/>
+                        <span>Eliminar Evento</span>
+                    </button>
+                )}
             </div>
         );
     };

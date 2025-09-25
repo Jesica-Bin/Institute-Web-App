@@ -460,8 +460,8 @@ const StudentDashboardScreen: React.FC = () => {
                         <h2 className="text-lg font-semibold text-slate-800 mb-4">Atajos</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                             {/* Fix: Destructured the shortcut object to avoid passing the reserved 'key' property to the ShortcutButton component. */}
-                            {shortcuts.map(({ key, ...rest }) => (
-                                <ShortcutButton key={key} {...rest} />
+                            {shortcuts.map(({ key, to, text, icon }) => (
+                                <ShortcutButton key={key} to={to} text={text} icon={icon} />
                             ))}
                             <button 
                                 onClick={() => setShortcutsModalOpen(true)}
