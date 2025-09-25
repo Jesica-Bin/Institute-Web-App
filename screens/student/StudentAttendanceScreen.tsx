@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ChevronRightIcon, DocumentTextIcon, CalendarIcon, ChevronLeftIcon } from '../../components/Icons';
 import { mockSubjectDetails } from '../../data';
 import { SubjectDetail } from '../../types';
+import { getSchoolYear, calculateTotalClassesForSubject } from '../../store';
 
 const SchoolYearPieChart = ({ present, absent, justified, totalClasses }: { present: number, absent: number, justified: number, totalClasses: number }) => {
     const attended = present + absent + justified;
@@ -184,9 +185,23 @@ const SubjectCarousel: React.FC<{
 
 const StudentAttendanceScreen: React.FC = () => {
     const subjectsInCourse = useMemo(() => Object.values(mockSubjectDetails).filter(s => s.status === 'cursando'), []);
+    const [recalculatedSubjects, setRecalculatedSubjects] = useState<SubjectDetail[]>(subjectsInCourse);
     const location = useLocation();
     const { subjectId } = location.state || {};
     const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        const { startDate, endDate } = getSchoolYear();
+        if (startDate && endDate) {
+            const updatedSubjects = subjectsInCourse.map(subject => {
+                const { totalClasses, maxAbsences } = calculateTotalClassesForSubject(subject, startDate, endDate);
+                return { ...subject, totalClasses, maxAbsences };
+            });
+            setRecalculatedSubjects(updatedSubjects);
+        } else {
+            setRecalculatedSubjects(subjectsInCourse);
+        }
+    }, [subjectsInCourse]);
 
     useEffect(() => {
         if (subjectId && subjectsInCourse.length > 0) {
@@ -205,7 +220,7 @@ const StudentAttendanceScreen: React.FC = () => {
             </div>
             
             <SubjectCarousel 
-                subjects={subjectsInCourse} 
+                subjects={recalculatedSubjects} 
                 currentIndex={currentIndex}
                 setCurrentIndex={setCurrentIndex}
             />

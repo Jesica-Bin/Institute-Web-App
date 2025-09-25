@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Student, StudentAttendanceStatus, RequestStatus, SubjectDetail } from '../types';
 import { UserCircleIcon } from '../components/Icons';
 import { mockStudentAttendanceRecords, mockRequests, mockSubjectDetails } from '../data';
+import { getSchoolYear, calculateTotalClassesForSubject } from '../store';
 
 interface StudentProfileScreenProps {
     student?: Student;
@@ -86,7 +87,17 @@ const StudentProfileScreen: React.FC<StudentProfileScreenProps> = ({ student: pr
             setSelectedSubjectDetails(null);
         } else {
             const subject = subjectsInCourse.find(s => s.name === subjectName);
-            setSelectedSubjectDetails(subject || null);
+            if (subject) {
+                const { startDate, endDate } = getSchoolYear();
+                if (startDate && endDate) {
+                    const { totalClasses, maxAbsences } = calculateTotalClassesForSubject(subject, startDate, endDate);
+                    setSelectedSubjectDetails({ ...subject, totalClasses, maxAbsences });
+                } else {
+                    setSelectedSubjectDetails(subject); // Fallback to static data if year not set
+                }
+            } else {
+                setSelectedSubjectDetails(null);
+            }
         }
     };
 

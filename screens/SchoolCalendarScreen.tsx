@@ -6,8 +6,10 @@ import {
     ChevronLeftIcon, ChevronRightIcon, PlusIcon, InformationCircleIcon,
     TrashIcon, ChevronDownIcon, ChevronUpIcon, XMarkIcon, EllipsisVerticalIcon,
     ArrowsRightLeftIcon,
-    CheckBadgeIcon
+    CheckBadgeIcon,
+    CalendarDaysIcon,
 } from '../components/Icons';
+import { setSchoolYear, getSchoolYear, fetchNationalHolidays } from '../store';
 
 // --- Helper Functions & Constants ---
 const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -56,6 +58,7 @@ const SchoolCalendarScreen: React.FC = () => {
     const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
+    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
     const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
     const [swapCandidate, setSwapCandidate] = useState<CalendarEvent | null>(null);
     const [menuState, setMenuState] = useState<{ event: CalendarEvent; position?: { top: number; left: number } } | null>(null);
@@ -66,22 +69,40 @@ const SchoolCalendarScreen: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const holidayDates = new Set<string>();
-        mockCalendarEvents.forEach(event => {
-            if (event.type === CalendarEventType.HOLIDAY || event.type === CalendarEventType.INSTITUTIONAL) {
-                holidayDates.add(event.date);
-            }
-        });
+        const loadCalendarData = async () => {
+            const year = currentDate.getFullYear();
+            const nationalHolidays = await fetchNationalHolidays(year);
+            const nationalHolidayDates = new Set(nationalHolidays.map(h => h.date));
+            const institutionalHolidayDates = new Set<string>();
 
-        const processedEvents = mockCalendarEvents.map(event => {
-            if (event.type === CalendarEventType.CLASS && holidayDates.has(event.date)) {
-                return { ...event, status: ClassStatus.CANCELED };
-            }
-            return event;
-        });
+            mockCalendarEvents.forEach(event => {
+                if (event.type === CalendarEventType.HOLIDAY || event.type === CalendarEventType.INSTITUTIONAL) {
+                    institutionalHolidayDates.add(event.date);
+                }
+            });
 
-        setEvents(processedEvents.sort((a,b) => a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || '')));
-    }, []);
+            const allHolidayDates = new Set([...nationalHolidayDates, ...institutionalHolidayDates]);
+
+            const processedEvents = mockCalendarEvents.map(event => {
+                if (event.type === CalendarEventType.CLASS && allHolidayDates.has(event.date)) {
+                    return { ...event, status: ClassStatus.CANCELED };
+                }
+                return event;
+            });
+            
+            // Combine mock events with fetched national holidays, avoiding duplicates
+            const finalEvents = [...processedEvents];
+            nationalHolidays.forEach(holiday => {
+                if (!mockCalendarEvents.some(e => e.date === holiday.date && e.title === holiday.title)) {
+                    finalEvents.push(holiday);
+                }
+            });
+            
+            setEvents(finalEvents.sort((a,b) => a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || '')));
+        };
+        
+        loadCalendarData();
+    }, [currentDate]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -314,6 +335,98 @@ const SchoolCalendarScreen: React.FC = () => {
         );
     };
 
+    const ConfigModal: React.FC<{ isOpen: boolean; onClose: () => void; }> = ({ isOpen, onClose }) => {
+        const schoolYear = getSchoolYear();
+        const [startDate, setStartDate] = useState(schoolYear.startDate || '');
+        const [endDate, setEndDate] = useState(schoolYear.endDate || '');
+        const [winterStart, setWinterStart] = useState(schoolYear.winterBreakStartDate || '');
+        const [winterEnd, setWinterEnd] = useState(schoolYear.winterBreakEndDate || '');
+
+        const startDateRef = useRef<HTMLInputElement>(null);
+        const endDateRef = useRef<HTMLInputElement>(null);
+        const winterStartRef = useRef<HTMLInputElement>(null);
+        const winterEndRef = useRef<HTMLInputElement>(null);
+
+        const handleDateIconClick = (ref: React.RefObject<HTMLInputElement>) => {
+            if (ref.current) {
+                try {
+                    ref.current.showPicker();
+                } catch (error) {
+                    ref.current.focus();
+                }
+            }
+        };
+      
+        if (!isOpen) return null;
+      
+        const handleSave = () => {
+          if (startDate && endDate) {
+            setSchoolYear(startDate, endDate, winterStart, winterEnd);
+            onClose();
+            alert('Ciclo lectivo configurado. El total de clases para cada materia ha sido recalculado.');
+          } else {
+            alert('Por favor, selecciona las fechas de inicio y fin del ciclo.');
+          }
+        };
+      
+        return (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b flex items-center space-x-3">
+                    <CalendarDaysIcon className="w-6 h-6 text-indigo-700"/>
+                    <div>
+                        <h3 className="text-lg font-bold">Configurar Ciclo Lectivo</h3>
+                        <p className="text-sm text-slate-500">Define las fechas importantes del año.</p>
+                    </div>
+                </div>
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label htmlFor="start-date" className="block text-sm font-medium text-slate-700 mb-1">Inicio del Ciclo</label>
+                         <div className="relative">
+                            <input ref={startDateRef} type="date" id="start-date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full p-2 pr-10 border border-slate-300 rounded-md bg-white"/>
+                            <button type="button" onClick={() => handleDateIconClick(startDateRef)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600" aria-label="Seleccionar fecha de inicio del ciclo">
+                                <CalendarDaysIcon className="w-5 h-5" />
+                            </button>
+                         </div>
+                    </div>
+                    <div>
+                        <label htmlFor="end-date" className="block text-sm font-medium text-slate-700 mb-1">Fin del Ciclo</label>
+                        <div className="relative">
+                            <input ref={endDateRef} type="date" id="end-date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full p-2 pr-10 border border-slate-300 rounded-md bg-white"/>
+                             <button type="button" onClick={() => handleDateIconClick(endDateRef)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600" aria-label="Seleccionar fecha de fin del ciclo">
+                                <CalendarDaysIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                    <hr className="border-slate-200" />
+                    <div>
+                        <label htmlFor="winter-start-date" className="block text-sm font-medium text-slate-700 mb-1">Inicio de Receso (Opcional)</label>
+                        <div className="relative">
+                            <input ref={winterStartRef} type="date" id="winter-start-date" value={winterStart} onChange={e => setWinterStart(e.target.value)} className="w-full p-2 pr-10 border border-slate-300 rounded-md bg-white"/>
+                            <button type="button" onClick={() => handleDateIconClick(winterStartRef)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600" aria-label="Seleccionar fecha de inicio de receso">
+                                <CalendarDaysIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                     <div>
+                        <label htmlFor="winter-end-date" className="block text-sm font-medium text-slate-700 mb-1">Fin de Receso (Opcional)</label>
+                        <div className="relative">
+                            <input ref={winterEndRef} type="date" id="winter-end-date" value={winterEnd} onChange={e => setWinterEnd(e.target.value)} className="w-full p-2 pr-10 border border-slate-300 rounded-md bg-white"/>
+                             <button type="button" onClick={() => handleDateIconClick(winterEndRef)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600" aria-label="Seleccionar fecha de fin de receso">
+                                <CalendarDaysIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-4 bg-slate-50 flex justify-end space-x-2 rounded-b-lg">
+                    <button type="button" onClick={onClose} className="px-4 py-2 bg-slate-200 rounded-md font-semibold">Cancelar</button>
+                    <button type="button" onClick={handleSave} className="px-4 py-2 bg-indigo-700 text-white rounded-md font-semibold">Guardar Cambios</button>
+                </div>
+            </div>
+          </div>
+        );
+    };
+
     const ActionMenuItems: React.FC<{ event: CalendarEvent; itemClassName: string }> = ({ event, itemClassName }) => {
         const isClass = event.type === CalendarEventType.CLASS;
         const isCanceled = isClass && event.status === ClassStatus.CANCELED;
@@ -525,9 +638,14 @@ const SchoolCalendarScreen: React.FC = () => {
                             )) : <p className="text-sm text-center text-slate-500 py-4">No hay eventos para este día.</p>}
                         </div>
                     </div>
-                    <button onClick={() => setAddEventModalOpen(true)} className="w-full flex items-center justify-center space-x-2 bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-800 transition-colors">
-                        <PlusIcon className="w-5 h-5" /><span>Agregar Evento</span>
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                        <button onClick={() => setAddEventModalOpen(true)} className="w-full flex items-center justify-center space-x-2 bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-800 transition-colors text-sm">
+                            <PlusIcon className="w-4 h-4" /><span>Agregar Evento</span>
+                        </button>
+                        <button onClick={() => setIsConfigModalOpen(true)} className="w-full flex items-center justify-center space-x-2 bg-slate-200 text-slate-800 font-bold py-3 px-4 rounded-lg hover:bg-slate-300 transition-colors text-sm">
+                            <CalendarDaysIcon className="w-4 h-4" /><span>Ciclo Lectivo</span>
+                        </button>
+                    </div>
                 </div>
                 <div className="lg:col-span-2">
                      <div className="bg-white p-6 rounded-lg shadow-sm h-full">
@@ -595,9 +713,14 @@ const SchoolCalendarScreen: React.FC = () => {
                                 )) : <p className="text-sm text-center text-slate-500 py-4">No hay eventos para este día.</p>}
                             </div>
                         </div>
-                         <button onClick={() => setAddEventModalOpen(true)} className="fixed bottom-6 right-6 bg-indigo-700 text-white p-4 rounded-full shadow-lg hover:bg-indigo-800">
-                            <PlusIcon className="w-6 h-6" />
-                        </button>
+                        <div className="fixed bottom-6 right-6 flex flex-col space-y-3">
+                            <button onClick={() => setIsConfigModalOpen(true)} className="bg-slate-800 text-white p-4 rounded-full shadow-lg hover:bg-slate-900">
+                                <CalendarDaysIcon className="w-6 h-6"/>
+                            </button>
+                            <button onClick={() => setAddEventModalOpen(true)} className="bg-indigo-700 text-white p-4 rounded-full shadow-lg hover:bg-indigo-800">
+                                <PlusIcon className="w-6 h-6" />
+                            </button>
+                        </div>
                     </div>
                 )}
                 
@@ -628,6 +751,7 @@ const SchoolCalendarScreen: React.FC = () => {
             </div>
             
             <AddEventModal isOpen={isAddEventModalOpen} onClose={() => setAddEventModalOpen(false)} onAddEvent={handleAddEvent} selectedDate={selectedDate} />
+            <ConfigModal isOpen={isConfigModalOpen} onClose={() => setIsConfigModalOpen(false)} />
             <SwapClassModal isOpen={isSwapModalOpen} onClose={() => setIsSwapModalOpen(false)} onConfirm={handleConfirmSwap} eventToSwap={swapCandidate} allEvents={events} />
             <ActionMenu />
         </div>

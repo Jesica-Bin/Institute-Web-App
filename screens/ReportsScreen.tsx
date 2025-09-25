@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { mockCareers, courseData, mockStudents, mockSubjectDetails } from '../data';
 import { Student } from '../types';
-import { ArrowDownTrayIcon, DocumentTextIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon } from '../components/Icons';
+import { ArrowDownTrayIcon, DocumentTextIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, CalendarDaysIcon } from '../components/Icons';
 import { getFullAttendanceStore, isRegisterClosed } from '../store';
 
 // To prevent TypeScript errors for CDN-loaded libraries
@@ -179,6 +179,21 @@ const ReportsScreen: React.FC = () => {
     const [dateRangeType, setDateRangeType] = useState('monthly');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
+
+    const startDateRef = useRef<HTMLInputElement>(null);
+    const endDateRef = useRef<HTMLInputElement>(null);
+
+    const handleDateIconClick = (ref: React.RefObject<HTMLInputElement>) => {
+        if (ref.current) {
+            try {
+                ref.current.showPicker();
+            } catch (error) {
+                // For browsers that don't support showPicker(), focus the input.
+                // Clicking the input itself will open the picker.
+                ref.current.focus();
+            }
+        }
+    };
 
     const getPeriod = (): { startDate: Date; endDate: Date; periodLabel: string } | null => {
         let startDate = new Date();
@@ -406,11 +421,35 @@ const ReportsScreen: React.FC = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                             <div>
                                 <label htmlFor="start-date" className="block text-sm font-medium text-slate-600 mb-1">Desde</label>
-                                <input type="date" id="start-date" value={customStart} onChange={e => setCustomStart(e.target.value)} className="w-full p-2 bg-white text-slate-800 border border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                                <div className="relative">
+                                    <input
+                                        ref={startDateRef}
+                                        type="date"
+                                        id="start-date"
+                                        value={customStart}
+                                        onChange={e => setCustomStart(e.target.value)}
+                                        className="w-full p-2 pr-10 bg-white text-slate-800 border border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                    />
+                                    <button type="button" onClick={() => handleDateIconClick(startDateRef)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600" aria-label="Seleccionar fecha de inicio">
+                                        <CalendarDaysIcon className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label htmlFor="end-date" className="block text-sm font-medium text-slate-600 mb-1">Hasta</label>
-                                <input type="date" id="end-date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} className="w-full p-2 bg-white text-slate-800 border border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" />
+                                <div className="relative">
+                                    <input
+                                        ref={endDateRef}
+                                        type="date"
+                                        id="end-date"
+                                        value={customEnd}
+                                        onChange={e => setCustomEnd(e.target.value)}
+                                        className="w-full p-2 pr-10 bg-white text-slate-800 border border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                    />
+                                     <button type="button" onClick={() => handleDateIconClick(endDateRef)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600" aria-label="Seleccionar fecha de fin">
+                                        <CalendarDaysIcon className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}

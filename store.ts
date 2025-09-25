@@ -1,4 +1,5 @@
-import { AttendanceStatus } from './types';
+import { AttendanceStatus, CalendarEvent, CalendarEventType, SubjectDetail } from './types';
+import { mockCalendarEvents } from './data';
 
 // Structure: { "YYYY-MM-DD": { "Subject Name": { studentId: status } } }
 type AttendanceStoreData = {
@@ -47,6 +48,120 @@ const getTodayDateString = (): string => {
     const day = today.getDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
 };
+
+// --- School Year Configuration ---
+type SchoolYearConfig = {
+  startDate: string | null;
+  endDate: string | null;
+  winterBreakStartDate: string | null;
+  winterBreakEndDate: string | null;
+};
+
+// In a real app, this would be persisted (e.g., localStorage or a backend)
+const schoolYearConfig: SchoolYearConfig = {
+  startDate: null,
+  endDate: null,
+  winterBreakStartDate: null,
+  winterBreakEndDate: null,
+};
+
+export const setSchoolYear = (startDate: string, endDate: string, winterBreakStart?: string, winterBreakEnd?: string) => {
+  schoolYearConfig.startDate = startDate;
+  schoolYearConfig.endDate = endDate;
+  schoolYearConfig.winterBreakStartDate = winterBreakStart || null;
+  schoolYearConfig.winterBreakEndDate = winterBreakEnd || null;
+};
+
+export const getSchoolYear = (): SchoolYearConfig => {
+  return schoolYearConfig;
+};
+
+// --- National Holiday Fetching & Caching ---
+const nationalHolidaysCache: { [year: number]: CalendarEvent[] } = {};
+
+export const fetchNationalHolidays = async (year: number): Promise<CalendarEvent[]> => {
+    if (nationalHolidaysCache[year]) {
+        return nationalHolidaysCache[year];
+    }
+    try {
+        const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/AR`);
+        if (!response.ok) {
+            console.error('Failed to fetch national holidays');
+            return [];
+        }
+        const data: { date: string; localName: string; }[] = await response.json();
+        
+        const holidays: CalendarEvent[] = data.map((holiday, index) => ({
+            id: `holiday-${year}-${index}`,
+            date: holiday.date, // API provides "YYYY-MM-DD"
+            type: CalendarEventType.HOLIDAY,
+            title: holiday.localName,
+            description: 'Feriado Nacional',
+        }));
+        
+        nationalHolidaysCache[year] = holidays;
+        return holidays;
+    } catch (error) {
+        console.error('Error fetching national holidays:', error);
+        return [];
+    }
+};
+
+// --- Attendance Calculation Logic ---
+export const calculateTotalClassesForSubject = (
+    subject: SubjectDetail, 
+    startDate: string, 
+    endDate: string
+): { totalClasses: number, maxAbsences: number } => {
+    const scheduleLines = subject.schedule.split('\n');
+    const dayMap: { [key: string]: number } = { 'Dom': 0, 'Lun': 1, 'Mar': 2, 'Mie': 3, 'Jue': 4, 'Vie': 5, 'Sáb': 6 };
+    
+    const classDaysOfWeek = scheduleLines
+        .map(line => line.substring(0, 3))
+        .filter(dayStr => dayMap[dayStr] !== undefined)
+        .map(dayStr => dayMap[dayStr]);
+
+    if (classDaysOfWeek.length === 0) {
+        return { totalClasses: subject.totalClasses || 0, maxAbsences: subject.maxAbsences || 0 };
+    }
+
+    let totalClasses = 0;
+    let currentDate = new Date(startDate + 'T00:00:00');
+    const finalDate = new Date(endDate + 'T00:00:00');
+    const { winterBreakStartDate, winterBreakEndDate } = getSchoolYear();
+    
+    const winterBreakStart = winterBreakStartDate ? new Date(winterBreakStartDate + 'T00:00:00') : null;
+    const winterBreakEnd = winterBreakEndDate ? new Date(winterBreakEndDate + 'T00:00:00') : null;
+
+    const holidays = new Set(
+        mockCalendarEvents
+            .filter(e => e.type === CalendarEventType.HOLIDAY || e.type === CalendarEventType.INSTITUTIONAL)
+            .map(e => e.date)
+    );
+    
+    // Add fetched national holidays to the set
+    const year = new Date(startDate).getFullYear();
+    (nationalHolidaysCache[year] || []).forEach(h => holidays.add(h.date));
+
+
+    while (currentDate <= finalDate) {
+        const dayOfWeek = currentDate.getDay();
+        const dateString = currentDate.toISOString().split('T')[0];
+        
+        const isWinterBreak = winterBreakStart && winterBreakEnd && currentDate >= winterBreakStart && currentDate <= winterBreakEnd;
+
+        if (!holidays.has(dateString) && !isWinterBreak) {
+            const classesOnThisDay = classDaysOfWeek.filter(d => d === dayOfWeek).length;
+            totalClasses += classesOnThisDay;
+        }
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    const maxAbsences = Math.floor(totalClasses * 0.25);
+    return { totalClasses, maxAbsences };
+};
+
 
 // --- Attendance ---
 export const getAttendanceForSubject = (date: string, subject: string): { [studentId: number]: AttendanceStatus } | undefined => {

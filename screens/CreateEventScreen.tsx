@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EventStatus, Event } from '../types';
-import { MapPinIcon, XMarkIcon, CrosshairsIcon } from '../components/Icons';
+import { MapPinIcon, XMarkIcon, CrosshairsIcon, CalendarDaysIcon } from '../components/Icons';
 
 // --- Sub-component for the Map Modal ---
 interface MapPickerModalProps {
@@ -75,6 +75,18 @@ const CreateEventScreen: React.FC = () => {
     const [latitude, setLatitude] = useState<number | null>(null);
     const [longitude, setLongitude] = useState<number | null>(null);
     const [isMapModalOpen, setMapModalOpen] = useState(false);
+    const dateRef = useRef<HTMLInputElement>(null);
+
+    const handleDateIconClick = () => {
+        if (dateRef.current) {
+            try {
+                dateRef.current.showPicker();
+            } catch (error) {
+                // For browsers that don't support showPicker(), focus the input.
+                dateRef.current.focus();
+            }
+        }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -118,7 +130,20 @@ const CreateEventScreen: React.FC = () => {
                         </div>
                         <div>
                             <label htmlFor="date" className="block text-sm font-medium text-slate-700 mb-1">Fecha</label>
-                            <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} required className={inputStyle} />
+                             <div className="relative">
+                                <input
+                                    ref={dateRef}
+                                    type="date"
+                                    id="date"
+                                    value={date}
+                                    onChange={e => setDate(e.target.value)}
+                                    required
+                                    className={`${inputStyle} pr-10`}
+                                />
+                                <button type="button" onClick={handleDateIconClick} className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600" aria-label="Seleccionar fecha">
+                                    <CalendarDaysIcon className="w-5 h-5" />
+                                </button>
+                             </div>
                         </div>
                         <div>
                             <label htmlFor="location" className="block text-sm font-medium text-slate-700 mb-1">Ubicación</label>

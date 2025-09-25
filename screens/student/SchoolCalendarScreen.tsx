@@ -5,6 +5,7 @@ import { CalendarEvent, ClassStatus, CalendarEventType } from '../../types';
 import { 
     ChevronLeftIcon, ChevronRightIcon, InformationCircleIcon,
 } from '../../components/Icons';
+import { fetchNationalHolidays } from '../../store';
 
 // --- Helper Functions & Constants ---
 const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -110,7 +111,7 @@ const StudentSchoolCalendarScreen: React.FC = () => {
     const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-    const [nonClassEvents, setNonClassEvents] = useState<CalendarEvent[]>([]);
+    const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
     const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
 
     useEffect(() => {
@@ -120,10 +121,22 @@ const StudentSchoolCalendarScreen: React.FC = () => {
     }, []);
     
     useEffect(() => {
-        // Only keep non-class events for the calendar display (holidays, etc.)
-        const filtered = mockCalendarEvents.filter(event => event.type !== CalendarEventType.CLASS);
-        setNonClassEvents(filtered);
-    }, []);
+        const loadCalendarData = async () => {
+            const year = currentDate.getFullYear();
+            const nationalHolidays = await fetchNationalHolidays(year);
+            
+            const finalEvents = [...mockCalendarEvents];
+            nationalHolidays.forEach(holiday => {
+                if (!mockCalendarEvents.some(e => e.date === holiday.date && e.title === holiday.title)) {
+                    finalEvents.push(holiday);
+                }
+            });
+            
+            setCalendarEvents(finalEvents);
+        };
+        
+        loadCalendarData();
+    }, [currentDate]);
 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -134,13 +147,15 @@ const StudentSchoolCalendarScreen: React.FC = () => {
 
     const eventsByDate = useMemo(() => {
         const grouped: { [key: string]: CalendarEvent[] } = {};
-        nonClassEvents.forEach(event => {
-            const dateKey = event.date;
-            if (!grouped[dateKey]) { grouped[dateKey] = []; }
-            grouped[dateKey].push(event);
+        calendarEvents.forEach(event => {
+            if (event.type !== CalendarEventType.CLASS) {
+                const dateKey = event.date;
+                if (!grouped[dateKey]) { grouped[dateKey] = []; }
+                grouped[dateKey].push(event);
+            }
         });
         return grouped;
-    }, [nonClassEvents]);
+    }, [calendarEvents]);
     
     const handlePrev = () => {
         if (viewMode === 'month') setCurrentDate(new Date(year, month - 1, 1));

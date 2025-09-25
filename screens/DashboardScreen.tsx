@@ -216,9 +216,9 @@ const DashboardScreen: React.FC = () => {
                     <div className="bg-white p-4 rounded-lg shadow-sm">
                         <h2 className="text-lg font-semibold mb-3">Atajos</h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {/* Fix: Destructured shortcut to pass props explicitly and avoid spreading an unwanted 'key' prop. */}
-                            {shortcuts.map(({ key, to, text, icon }) => (
-                                <ShortcutButton key={key} to={to} text={text} icon={icon} />
+                            {/* Fix: Destructured the shortcut object to avoid passing the reserved 'key' property to the ShortcutButton component. */}
+                            {shortcuts.map(({ key, ...rest }) => (
+                                <ShortcutButton key={key} {...rest} />
                             ))}
                             <button 
                                 onClick={() => setIsModalOpen(true)}
