@@ -1,5 +1,4 @@
 
-
 import * as React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, BellIcon, UserCircleIcon } from './Icons';
@@ -11,9 +10,10 @@ interface HeaderProps {
     isDashboard?: boolean;
     backPath?: string;
     onProfileClick?: () => void;
+    notificationsPath?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, showBackButton, isDashboard, backPath, onProfileClick }) => {
+const Header: React.FC<HeaderProps> = ({ title, showBackButton, isDashboard, backPath, onProfileClick, notificationsPath }) => {
     const navigate = useNavigate();
     const [hasUnread, setHasUnread] = React.useState(false);
 
@@ -21,53 +21,44 @@ const Header: React.FC<HeaderProps> = ({ title, showBackButton, isDashboard, bac
         setHasUnread(hasUnreadNotifications());
     }, []);
 
-    const handleBackClick = () => {
-        // Navigate to a specific, deterministic path instead of relying on browser history.
-        navigate(backPath || '/');
+    const handleBack = () => {
+        if (backPath) {
+            navigate(backPath);
+        } else {
+            navigate(-1);
+        }
     };
 
-    const headerBaseClasses = "sticky top-0 z-10";
-    const headerStyleClasses = isDashboard 
-        ? "bg-slate-100 text-slate-800"
-        : "bg-indigo-800 text-white shadow-md";
-    
-    const iconButtonClasses = isDashboard
-        ? "p-2 rounded-full hover:bg-slate-200"
-        : "p-2 rounded-full hover:bg-indigo-700";
-    
+    const finalNotificationsPath = notificationsPath || '/notificaciones';
+
     return (
-        <header className={`${headerBaseClasses} ${headerStyleClasses}`}>
-            <div className="container mx-auto px-4 md:px-6 py-3 grid grid-cols-3 items-center">
-                {/* Left side: button */}
+        <header className="bg-indigo-800 text-white shadow-md sticky top-0 z-10">
+            <div className="container mx-auto px-4 py-3 grid grid-cols-3 items-center h-[69px]">
                 <div className="flex justify-start">
-                    {showBackButton ? (
-                        <button onClick={handleBackClick} className={iconButtonClasses}>
+                    {showBackButton && (
+                        <button onClick={handleBack} className="p-2 rounded-full hover:bg-indigo-700">
                             <ArrowLeftIcon className="w-6 h-6" />
                         </button>
-                    ) : (
-                        <div className="w-10 h-10" /> // Placeholder for alignment
                     )}
                 </div>
-
-                {/* Center: title */}
+                
                 <h1 className="text-base font-semibold text-center truncate">
-                    {title}
+                    {isDashboard ? '' : title}
                 </h1>
 
-                {/* Right side: icon/avatar or placeholder */}
-                <div className="flex justify-end items-center">
+                <div className="flex justify-end items-center space-x-2">
                     {isDashboard ? (
-                         <div className="flex items-center space-x-1">
-                            <Link to="/notificaciones" className={`relative ${iconButtonClasses}`}>
-                                <BellIcon className="w-6 h-6 md:w-7 md:h-7" />
-                                {hasUnread && <span className="absolute top-2 right-2 block w-2.5 h-2.5 bg-red-500 rounded-full" />}
+                        <>
+                            <Link to={finalNotificationsPath} className="relative p-2 rounded-full hover:bg-indigo-700">
+                                <BellIcon className="w-6 h-6" />
+                                {hasUnread && <span className="absolute top-1.5 right-1.5 block w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-indigo-800" />}
                             </Link>
-                            <button onClick={onProfileClick} className={iconButtonClasses}>
-                                <UserCircleIcon className="w-7 h-7" />
+                            <button onClick={onProfileClick} className="p-2 rounded-full hover:bg-indigo-700">
+                                <UserCircleIcon className="w-6 h-6" />
                             </button>
-                         </div>
+                        </>
                     ) : (
-                        <div className="w-10 h-10" /> // Placeholder to keep title centered
+                        <div className="w-10 h-10" />
                     )}
                 </div>
             </div>

@@ -1,6 +1,3 @@
-
-
-
 import * as React from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate, useMatch, Link, NavLink } from 'react-router-dom';
 import { mockSubjectDetails, mockCertificateRequests, mockTeacherSubjects } from './data';
@@ -161,8 +158,8 @@ const directorNavLinks = [
     { to: '/', text: 'Inicio', icon: HomeIcon },
     { to: '/gestion-academica', text: 'Académico', icon: BriefcaseIcon },
     { to: '/usuarios', text: 'Usuarios', icon: UsersIcon },
-    { to: '/comunicados-director', text: 'Comunicar', icon: MegaphoneIcon },
-    { to: '/reportes', text: 'Reportes', icon: DocumentChartBarIcon },
+    { to: '/gestion-reclamos', text: 'Reclamos', icon: ChatBubbleLeftRightIcon },
+    { to: '/auditoria', text: 'Auditoría', icon: ShieldCheckIcon },
 ];
 
 const NavItem: React.FC<{ to: string; text: string; icon: React.ElementType; }> = ({ to, text, icon: Icon }) => (
@@ -739,6 +736,7 @@ const DirectorApp: React.FC<DirectorAppProps> = ({ onLogout, isDrawerCollapsed, 
                         showBackButton={showBackButton}
                         isDashboard={isDashboard}
                         backPath={'/'}
+                        notificationsPath="/comunicados-director"
                     />
                 )}
                 {isDesktop && isDashboard && (

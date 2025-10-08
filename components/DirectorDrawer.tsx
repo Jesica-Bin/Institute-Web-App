@@ -20,8 +20,6 @@ const navLinks = [
     { to: '/', text: 'Inicio', icon: HomeIcon },
     { to: '/gestion-academica', text: 'Gestión Académica', icon: BriefcaseIcon },
     { to: '/usuarios', text: 'Usuarios y Roles', icon: UsersIcon },
-    { to: '/reportes', text: 'Reportes y Estadísticas', icon: DocumentChartBarIcon },
-    { to: '/comunicados-director', text: 'Comunicados', icon: MegaphoneIcon },
     { to: '/gestion-reclamos', text: 'Buzón de Reclamos', icon: ChatBubbleLeftRightIcon },
     { to: '/auditoria', text: 'Auditoría y Backups', icon: ShieldCheckIcon },
 ];
