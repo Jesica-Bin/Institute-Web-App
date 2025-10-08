@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+
+import * as React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { mockSystemNotifications } from '../data';
 import { getOfficialCommunications } from '../store';
 import { Notification, NotificationType } from '../types';
-import { MegaphoneIcon, WrenchScrewdriverIcon, PlusIcon, ChevronRightIcon } from '../components/Icons';
+import { MegaphoneIcon, WrenchScrewdriverIcon, PlusIcon, ChevronRightIcon, AcademicCapIcon } from '../components/Icons';
 import NotificationDetailScreen from './NotificationDetailScreen';
 
 type Tab = 'system' | 'official';
@@ -19,6 +20,8 @@ const NotificationIcon = ({ type }: { type: NotificationType }) => {
             return <div className="p-3 bg-indigo-100 text-indigo-700 rounded-full"><WrenchScrewdriverIcon {...iconProps} /></div>;
         case NotificationType.OFFICIAL:
             return <div className="p-3 bg-purple-100 text-purple-700 rounded-full"><MegaphoneIcon {...iconProps} /></div>;
+        case NotificationType.GRADES:
+            return <div className="p-3 bg-green-100 text-green-700 rounded-full"><AcademicCapIcon {...iconProps} /></div>;
         default:
             return null;
     }
@@ -31,21 +34,21 @@ const TabButton = ({ label, active, onClick }: { label: string, active: boolean,
 };
 
 const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ userRole }) => {
-    const [activeTab, setActiveTab] = useState<Tab>('system');
+    const [activeTab, setActiveTab] = React.useState<Tab>('system');
     const officialCommunications = getOfficialCommunications();
-    const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
-    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+    const [selectedNotification, setSelectedNotification] = React.useState<Notification | null>(null);
+    const [isDesktop, setIsDesktop] = React.useState(window.innerWidth >= 1024);
     const navigate = useNavigate();
 
     const notificationsToShow = activeTab === 'system' ? mockSystemNotifications : officialCommunications;
 
-    useEffect(() => {
+    React.useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
     
-    useEffect(() => {
+    React.useEffect(() => {
         if (isDesktop && notificationsToShow.length > 0) {
             // Check if the current selection is still in the list, otherwise select the first one.
             const selectionIsValid = notificationsToShow.some(n => n.id === selectedNotification?.id);

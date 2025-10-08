@@ -6,6 +6,7 @@ export enum AttendanceStatus {
   PRESENT = 'P',
   ABSENT = 'A',
   LATE = 'T',
+  JUSTIFIED = 'J',
 }
 
 export interface Student {
@@ -46,6 +47,7 @@ export interface StudentRequest {
 export enum NotificationType {
   SYSTEM = 'SYSTEM',
   OFFICIAL = 'OFFICIAL',
+  GRADES = 'GRADES',
 }
 
 export interface Notification {
@@ -230,4 +232,76 @@ export interface CalendarEvent {
     originalStartTime?: string; // HH:MM
     originalEndTime?: string; // HH:MM
     isSwapped?: boolean;
+}
+
+
+// --- Teacher Types ---
+export interface TeacherUser {
+  name: string;
+  email: string;
+  legajo: string;
+}
+
+export interface TeacherSubject {
+  id: string;
+  name: string;
+  course: string;
+  studentCount: number;
+  nextClass?: string;
+}
+
+export interface TeacherSubjectDetail extends TeacherSubject {
+  description: string;
+  programUrl: string;
+  enrolledStudents: Student[];
+}
+
+
+// --- Director/Admin Types ---
+export interface DirectorUser {
+  name: string;
+  email: string;
+  role: 'Director' | 'Administrador';
+}
+
+export type UserRole = 'student' | 'preceptor' | 'teacher' | 'director';
+
+export interface ManagedUser {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: 'activo' | 'inactivo';
+  lastLogin: string;
+}
+
+export interface AuditLog {
+    id: number;
+    user: string;
+    role: UserRole;
+    action: string;
+    timestamp: string;
+}
+
+
+// --- Forum Types ---
+export interface ForumPost {
+    id: number;
+    threadId: number;
+    authorName: string;
+    authorRole: 'student' | 'teacher';
+    content: string;
+    createdAt: string; // ISO string date
+}
+
+export interface ForumThread {
+    id: number;
+    subjectId: string; // e.g., 'ts-1', 'redes1'
+    title: string;
+    question: string;
+    authorName: string;
+    createdAt: string; // ISO string date
+    replies: ForumPost[];
+    status: 'open' | 'answered';
+    isPinned: boolean;
 }

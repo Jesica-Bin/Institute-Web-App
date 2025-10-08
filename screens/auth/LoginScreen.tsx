@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '../../components/Icons';
-
-type UserRole = 'preceptor' | 'student';
+import { UserRole } from '../../types';
 
 interface LoginScreenProps {
     onLogin: (role: UserRole) => void;
@@ -34,14 +33,21 @@ const LoginFormContent: React.FC<{
     setRole: (role: UserRole) => void;
     onLogin: (role: UserRole) => void;
 }> = ({ role, setRole, onLogin }) => {
-    const [showPassword, setShowPassword] = useState(false);
+    const [showPassword, setShowPassword] = React.useState(false);
+
+    const roleEmails: Record<UserRole, string> = {
+        student: 'juan.perez@instituto.edu.ar',
+        preceptor: 'juana.perez@instituto.edu.ar',
+        teacher: 'ricardo.molina@instituto.edu.ar',
+        director: 'susana.gimenez@instituto.edu.ar',
+    };
     
     return (
         <>
             <form onSubmit={(e) => { e.preventDefault(); onLogin(role) }} className="space-y-4">
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email o Usuario</label>
-                    <input type="email" id="email" defaultValue={role === 'student' ? 'john.doe@email.com' : 'juana.perez@email.com'} className="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+                    <input type="email" id="email" value={roleEmails[role]} readOnly className="mt-1 block w-full px-3 py-2 bg-slate-100 border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
                 </div>
                 <div>
                     <label htmlFor="password" className="block text-sm font-medium text-slate-700">Contraseña</label>
@@ -67,9 +73,11 @@ const LoginFormContent: React.FC<{
                 </div>
                 <div>
                     <p className="text-sm font-medium text-slate-700">Ingresar como:</p>
-                    <div className="mt-2 flex rounded-md shadow-sm">
-                        <button type="button" onClick={() => setRole('student')} className={`flex-1 px-4 py-2 text-sm font-medium rounded-l-md transition ${role === 'student' ? 'bg-indigo-600 text-white z-10' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-300'}`}>Estudiante</button>
-                        <button type="button" onClick={() => setRole('preceptor')} className={`-ml-px flex-1 px-4 py-2 text-sm font-medium rounded-r-md transition ${role === 'preceptor' ? 'bg-indigo-600 text-white z-10' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-300'}`}>Preceptor</button>
+                    <div className="mt-2 grid grid-cols-2 rounded-md shadow-sm">
+                        <button type="button" onClick={() => setRole('student')} className={`px-4 py-2 text-sm font-medium rounded-l-md transition ${role === 'student' ? 'bg-indigo-600 text-white z-10' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-300'}`}>Estudiante</button>
+                        <button type="button" onClick={() => setRole('teacher')} className={`-ml-px px-4 py-2 text-sm font-medium transition ${role === 'teacher' ? 'bg-indigo-600 text-white z-10' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-300'}`}>Docente</button>
+                        <button type="button" onClick={() => setRole('preceptor')} className={`-mt-px px-4 py-2 text-sm font-medium rounded-bl-md transition ${role === 'preceptor' ? 'bg-indigo-600 text-white z-10' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-300'}`}>Preceptor</button>
+                        <button type="button" onClick={() => setRole('director')} className={`-ml-px -mt-px px-4 py-2 text-sm font-medium rounded-br-md transition ${role === 'director' ? 'bg-indigo-600 text-white z-10' : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-300'}`}>Dirección</button>
                     </div>
                 </div>
                 <button type="submit" className="w-full bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
@@ -95,7 +103,7 @@ const LoginFormContent: React.FC<{
 
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
-    const [role, setRole] = useState<UserRole>('student');
+    const [role, setRole] = React.useState<UserRole>('student');
 
     return (
         <>

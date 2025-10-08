@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { SunIcon, MoonIcon, TrashIcon } from '../components/Icons';
+import { SunIcon, MoonIcon, TrashIcon, QuestionMarkCircleIcon } from '../components/Icons';
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -48,6 +49,10 @@ const SettingsScreen: React.FC = () => {
             <SettingsSection title="Cuenta">
                 <Link to="/cambiar-contrasena" className="w-full text-left p-3 hover:bg-slate-50 rounded-md text-slate-700 transition-colors block">
                     Cambiar contraseña
+                </Link>
+                <Link to="/ayuda" className="w-full text-left p-3 flex items-center space-x-2 hover:bg-slate-50 rounded-md text-slate-700 transition-colors">
+                    <QuestionMarkCircleIcon className="w-5 h-5" />
+                    <span>Ayuda y Feedback</span>
                 </Link>
                  <button className="w-full text-left p-3 flex items-center space-x-2 hover:bg-red-50 rounded-md text-red-600 font-semibold transition-colors">
                     <TrashIcon className="w-5 h-5" />

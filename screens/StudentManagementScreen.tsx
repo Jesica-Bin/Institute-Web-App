@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+
+import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mockStudents, mockCareers, mockYears } from '../data';
 import { Student } from '../types';
@@ -23,21 +24,21 @@ const DetailPlaceholder: React.FC<{ icon: React.ElementType; message: string; }>
 
 
 const StudentManagementScreen: React.FC = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCareer, setSelectedCareer] = useState('');
-    const [selectedYear, setSelectedYear] = useState('');
-    const [showFilters, setShowFilters] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const [selectedCareer, setSelectedCareer] = React.useState('');
+    const [selectedYear, setSelectedYear] = React.useState('');
+    const [showFilters, setShowFilters] = React.useState(false);
+    const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
+    const [isDesktop, setIsDesktop] = React.useState(window.innerWidth >= 1024);
     const navigate = useNavigate();
 
-    useEffect(() => {
+    React.useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const filteredStudents = useMemo(() => {
+    const filteredStudents = React.useMemo(() => {
         return mockStudents.filter(student => {
             const nameMatches = `${student.name} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
             const careerMatches = selectedCareer ? student.carrera === selectedCareer : true;
@@ -46,7 +47,7 @@ const StudentManagementScreen: React.FC = () => {
         });
     }, [searchTerm, selectedCareer, selectedYear]);
     
-    useEffect(() => {
+    React.useEffect(() => {
         if (isDesktop) {
             const selectionInList = filteredStudents.some(s => s.id === selectedStudent?.id);
             if (filteredStudents.length > 0 && !selectionInList) {

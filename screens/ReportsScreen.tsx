@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import * as React from 'react';
 import { mockCareers, courseData, mockStudents, mockSubjectDetails } from '../data';
 import { Student } from '../types';
 import { ArrowDownTrayIcon, DocumentTextIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, CalendarDaysIcon } from '../components/Icons';
@@ -42,7 +42,7 @@ const getAttendanceData = (students: Student[], startDate: Date, endDate: Date, 
     }
 
     const attendance: AttendanceData = {};
-    const fallbackStatuses: AttendanceStatus[] = ['P', 'P', 'P', 'P', 'P', 'P', 'A', 'J'];
+    const fallbackStatuses: AttendanceStatus[] = ['P', 'P', 'P', 'P', 'P', 'P', 'A', 'J', 'T'];
 
     students.forEach(student => {
         attendance[student.id] = {};
@@ -53,7 +53,7 @@ const getAttendanceData = (students: Student[], startDate: Date, endDate: Date, 
             if (registerIsClosed) {
                 const storedStatus = fullStore[dateString]?.[subject]?.[student.id];
                 if (storedStatus && storedStatus !== 'UNMARKED') {
-                    attendance[student.id][dateString] = storedStatus as 'P' | 'A' | 'T';
+                    attendance[student.id][dateString] = storedStatus as 'P' | 'A' | 'T' | 'J';
                 } else {
                     // If register is closed but a student is unmarked (or not in the list), they are considered absent.
                     attendance[student.id][dateString] = 'A';
@@ -170,18 +170,18 @@ const GroupedReportPreview: React.FC<{ data: GroupedPreviewData; totalSelectedSu
 
 // --- Main ReportsScreen ---
 const ReportsScreen: React.FC = () => {
-    const [selectedCareers, setSelectedCareers] = useState<string[]>([]);
-    const [selectedYears, setSelectedYears] = useState<string[]>([]);
-    const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-    const [allPreviews, setAllPreviews] = useState<GroupedPreviewData[]>([]);
-    const [previewIndex, setPreviewIndex] = useState(0);
+    const [selectedCareers, setSelectedCareers] = React.useState<string[]>([]);
+    const [selectedYears, setSelectedYears] = React.useState<string[]>([]);
+    const [selectedSubjects, setSelectedSubjects] = React.useState<string[]>([]);
+    const [allPreviews, setAllPreviews] = React.useState<GroupedPreviewData[]>([]);
+    const [previewIndex, setPreviewIndex] = React.useState(0);
     
-    const [dateRangeType, setDateRangeType] = useState('monthly');
-    const [customStart, setCustomStart] = useState('');
-    const [customEnd, setCustomEnd] = useState('');
+    const [dateRangeType, setDateRangeType] = React.useState('monthly');
+    const [customStart, setCustomStart] = React.useState('');
+    const [customEnd, setCustomEnd] = React.useState('');
 
-    const startDateRef = useRef<HTMLInputElement>(null);
-    const endDateRef = useRef<HTMLInputElement>(null);
+    const startDateRef = React.useRef<HTMLInputElement>(null);
+    const endDateRef = React.useRef<HTMLInputElement>(null);
 
     const handleDateIconClick = (ref: React.RefObject<HTMLInputElement>) => {
         if (ref.current) {
@@ -225,7 +225,7 @@ const ReportsScreen: React.FC = () => {
     };
 
     // --- Derived Memoized Values ---
-    const availableYears = useMemo(() => {
+    const availableYears = React.useMemo(() => {
         if (selectedCareers.length === 0) return [];
         const years = new Set<string>();
         selectedCareers.forEach(career => {
@@ -234,7 +234,7 @@ const ReportsScreen: React.FC = () => {
         return Array.from(years).sort();
     }, [selectedCareers]);
 
-    const availableSubjects = useMemo(() => {
+    const availableSubjects = React.useMemo(() => {
         if (selectedCareers.length === 0 || selectedYears.length === 0) return [];
         const subjects = new Set<string>();
         selectedCareers.forEach(career => {
@@ -256,7 +256,7 @@ const ReportsScreen: React.FC = () => {
         );
     };
 
-    useEffect(() => {
+    React.useEffect(() => {
         const period = getPeriod();
         const tasks = getReportTasks();
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import * as React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '../../components/Icons';
 
@@ -38,7 +39,7 @@ const ProgressIndicator = ({ currentStep, totalSteps }: { currentStep: number, t
 );
 
 const PasswordInput = ({ id, label, placeholder }: { id: string, label: string, placeholder: string }) => {
-    const [isVisible, setIsVisible] = useState(false);
+    const [isVisible, setIsVisible] = React.useState(false);
     return (
         <div>
             <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">{label}</label>

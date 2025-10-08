@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { mockUser, mockAgenda, mockAllNotifications } from '../data';
 import { NotificationType } from '../types';
 import { 
     ChevronRightIcon, UsersIcon, DocumentTextIcon, DocumentChartBarIcon, PlusIcon,
     MegaphoneIcon, WrenchScrewdriverIcon, XMarkIcon, CheckIcon, PencilIcon,
-    CheckBadgeIcon, CalendarIcon
+    CheckBadgeIcon, CalendarIcon, BookOpenIcon
 } from '../components/Icons';
-
 
 // --- Shortcut Management ---
 interface Shortcut {
@@ -22,7 +22,8 @@ const ALL_PRECEPTOR_SHORTCUTS: Shortcut[] = [
     { key: 'solicitudes', to: '/solicitudes', text: 'Solicitudes', icon: DocumentTextIcon },
     { key: 'reportes', to: '/reportes', text: 'Reportes', icon: DocumentChartBarIcon },
     { key: 'asistencia', to: '/asistencia', text: 'Asistencia', icon: CheckBadgeIcon },
-    { key: 'eventos', to: '/gestion-eventos', text: 'Eventos', icon: CalendarIcon }
+    { key: 'eventos', to: '/gestion-eventos', text: 'Eventos', icon: CalendarIcon },
+    { key: 'mis-notas', to: '/mis-notas', text: 'Mis Notas', icon: BookOpenIcon },
 ];
 const MAX_SHORTCUTS = 4;
 
@@ -33,7 +34,7 @@ const ManageShortcutsModal: React.FC<{
     onSave: (selectedKeys: string[]) => void;
     currentShortcutKeys: string[];
 }> = ({ isOpen, onClose, onSave, currentShortcutKeys }) => {
-    const [selectedKeys, setSelectedKeys] = useState(currentShortcutKeys);
+    const [selectedKeys, setSelectedKeys] = React.useState(currentShortcutKeys);
 
     React.useEffect(() => {
         if (isOpen) {
@@ -104,7 +105,13 @@ const ManageShortcutsModal: React.FC<{
 };
 
 
-const ShortcutButton = ({ to, text, icon: Icon }: { to: string, text: string, icon: React.ElementType }) => (
+// FIX: Using React.FC with an interface for props to avoid potential issues with TypeScript's JSX type inference.
+interface ShortcutButtonProps {
+  to: string;
+  text: string;
+  icon: React.ElementType;
+}
+const ShortcutButton: React.FC<ShortcutButtonProps> = ({ to, text, icon: Icon }) => (
     <Link to={to} className="flex flex-col items-center justify-center p-4 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
         <Icon className="w-8 h-8 text-indigo-700 mb-2" />
         <span className="text-sm font-semibold text-slate-800 text-center">{text}</span>
@@ -124,12 +131,13 @@ const NotificationIcon = ({ type }: { type: NotificationType }) => {
 };
 
 const DashboardScreen: React.FC = () => {
-    const [shortcuts, setShortcuts] = useState<Shortcut[]>([
+    const [shortcuts, setShortcuts] = React.useState<Shortcut[]>([
         ALL_PRECEPTOR_SHORTCUTS.find(s => s.key === 'estudiantes')!,
         ALL_PRECEPTOR_SHORTCUTS.find(s => s.key === 'solicitudes')!,
         ALL_PRECEPTOR_SHORTCUTS.find(s => s.key === 'reportes')!,
+        ALL_PRECEPTOR_SHORTCUTS.find(s => s.key === 'mis-notas')!,
     ]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
 
     const handleSaveShortcuts = (newKeys: string[]) => {
         const newShortcutList = ALL_PRECEPTOR_SHORTCUTS.filter(s => newKeys.includes(s.key));
@@ -216,9 +224,8 @@ const DashboardScreen: React.FC = () => {
                     <div className="bg-white p-4 rounded-lg shadow-sm">
                         <h2 className="text-lg font-semibold mb-3">Atajos</h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {/* FIX: Destructured the shortcut object to avoid spreading the `key` property. The `key` prop is reserved by React and should not be passed down to child components. */}
-                            {shortcuts.map(({ key, to, text, icon }) => (
-                                <ShortcutButton key={key} to={to} text={text} icon={icon} />
+                            {shortcuts.map((shortcut) => (
+                                <ShortcutButton key={shortcut.key} to={shortcut.to} text={shortcut.text} icon={shortcut.icon} />
                             ))}
                             <button 
                                 onClick={() => setIsModalOpen(true)}

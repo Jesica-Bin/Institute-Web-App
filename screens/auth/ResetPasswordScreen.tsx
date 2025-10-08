@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+
+import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, CheckBadgeIcon } from '../../components/Icons';
 
 const ResetPasswordScreen: React.FC = () => {
     const navigate = useNavigate();
-    const [isUpdated, setIsUpdated] = useState(false);
+    const [isUpdated, setIsUpdated] = React.useState(false);
 
     if (isUpdated) {
         return (

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import * as React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CalendarIcon } from '../../components/Icons';
 
@@ -42,7 +42,7 @@ const ProgressIndicator = ({ currentStep, totalSteps }: { currentStep: number, t
 
 const RegisterIdentifyFormContent: React.FC = () => {
     const navigate = useNavigate();
-    const dobRef = useRef<HTMLInputElement>(null);
+    const dobRef = React.useRef<HTMLInputElement>(null);
 
     const handleDobIconClick = () => {
         if (dobRef.current) {

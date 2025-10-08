@@ -1,22 +1,23 @@
-import React, { useState, useEffect } from 'react';
+
+
+import * as React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MenuIcon, ArrowLeftIcon, BellIcon } from './Icons';
+import { ArrowLeftIcon, BellIcon, UserCircleIcon } from './Icons';
 import { hasUnreadNotifications } from '../store';
 
 interface HeaderProps {
     title: string;
-    onMenuClick: () => void;
     showBackButton: boolean;
-    showAvatar: boolean;
     isDashboard?: boolean;
     backPath?: string;
+    onProfileClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, onMenuClick, showBackButton, showAvatar, isDashboard, backPath }) => {
+const Header: React.FC<HeaderProps> = ({ title, showBackButton, isDashboard, backPath, onProfileClick }) => {
     const navigate = useNavigate();
-    const [hasUnread, setHasUnread] = useState(false);
+    const [hasUnread, setHasUnread] = React.useState(false);
 
-    useEffect(() => {
+    React.useEffect(() => {
         setHasUnread(hasUnreadNotifications());
     }, []);
 
@@ -44,9 +45,7 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick, showBackButton, sho
                             <ArrowLeftIcon className="w-6 h-6" />
                         </button>
                     ) : (
-                        <button onClick={onMenuClick} className={`${iconButtonClasses} lg:hidden`}>
-                            <MenuIcon className="w-6 h-6" />
-                        </button>
+                        <div className="w-10 h-10" /> // Placeholder for alignment
                     )}
                 </div>
 
@@ -56,14 +55,17 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick, showBackButton, sho
                 </h1>
 
                 {/* Right side: icon/avatar or placeholder */}
-                <div className="flex justify-end">
+                <div className="flex justify-end items-center">
                     {isDashboard ? (
-                         <Link to="/notificaciones" className={`relative ${iconButtonClasses}`}>
-                            <BellIcon className="w-6 h-6 md:w-7 md:h-7" />
-                            {hasUnread && <span className="absolute top-2 right-2 block w-2.5 h-2.5 bg-red-500 rounded-full" />}
-                         </Link>
-                    ) : showAvatar ? (
-                        <div className="w-10 h-10 bg-green-400 rounded-full flex items-center justify-center font-bold text-indigo-900">J</div>
+                         <div className="flex items-center space-x-1">
+                            <Link to="/notificaciones" className={`relative ${iconButtonClasses}`}>
+                                <BellIcon className="w-6 h-6 md:w-7 md:h-7" />
+                                {hasUnread && <span className="absolute top-2 right-2 block w-2.5 h-2.5 bg-red-500 rounded-full" />}
+                            </Link>
+                            <button onClick={onProfileClick} className={iconButtonClasses}>
+                                <UserCircleIcon className="w-7 h-7" />
+                            </button>
+                         </div>
                     ) : (
                         <div className="w-10 h-10" /> // Placeholder to keep title centered
                     )}

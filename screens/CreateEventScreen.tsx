@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EventStatus, Event } from '../types';
 import { MapPinIcon, XMarkIcon, CrosshairsIcon, CalendarDaysIcon } from '../components/Icons';
@@ -68,14 +68,14 @@ const MapPickerModal: React.FC<MapPickerModalProps> = ({ isOpen, onClose, onLoca
 
 const CreateEventScreen: React.FC = () => {
     const navigate = useNavigate();
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
-    const [date, setDate] = useState('');
-    const [location, setLocation] = useState('');
-    const [latitude, setLatitude] = useState<number | null>(null);
-    const [longitude, setLongitude] = useState<number | null>(null);
-    const [isMapModalOpen, setMapModalOpen] = useState(false);
-    const dateRef = useRef<HTMLInputElement>(null);
+    const [name, setName] = React.useState('');
+    const [description, setDescription] = React.useState('');
+    const [date, setDate] = React.useState('');
+    const [location, setLocation] = React.useState('');
+    const [latitude, setLatitude] = React.useState<number | null>(null);
+    const [longitude, setLongitude] = React.useState<number | null>(null);
+    const [isMapModalOpen, setMapModalOpen] = React.useState(false);
+    const dateRef = React.useRef<HTMLInputElement>(null);
 
     const handleDateIconClick = () => {
         if (dateRef.current) {

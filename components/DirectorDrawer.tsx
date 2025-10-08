@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { mockUser } from '../data';
+import { mockDirectorUser } from '../data';
 import { 
-    HomeIcon, CheckBadgeIcon, UsersIcon, DocumentTextIcon, UserCircleIcon, 
+    HomeIcon, UserCircleIcon, 
     ArrowRightOnRectangleIcon, XMarkIcon,
-    CalendarDaysIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon
+    ChevronDoubleLeftIcon, ChevronDoubleRightIcon, MegaphoneIcon,
+    BriefcaseIcon, UsersIcon, DocumentChartBarIcon, ShieldCheckIcon, ChatBubbleLeftRightIcon
 } from './Icons';
 
-interface DrawerProps {
+interface DirectorDrawerProps {
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
     onLogout: () => void;
@@ -17,15 +18,15 @@ interface DrawerProps {
 
 const navLinks = [
     { to: '/', text: 'Inicio', icon: HomeIcon },
-    { to: '/asistencia', text: 'Asistencia', icon: CheckBadgeIcon },
-    { to: '/gestion-estudiantes', text: 'Gestión de estudiantes', icon: UsersIcon },
-    { to: '/solicitudes', text: 'Gestión de solicitudes', icon: DocumentTextIcon },
-    { to: '/calendario', text: 'Calendario Institucional', icon: CalendarDaysIcon },
+    { to: '/gestion-academica', text: 'Gestión Académica', icon: BriefcaseIcon },
+    { to: '/usuarios', text: 'Usuarios y Roles', icon: UsersIcon },
+    { to: '/reportes', text: 'Reportes y Estadísticas', icon: DocumentChartBarIcon },
+    { to: '/comunicados-director', text: 'Comunicados', icon: MegaphoneIcon },
+    { to: '/gestion-reclamos', text: 'Buzón de Reclamos', icon: ChatBubbleLeftRightIcon },
+    { to: '/auditoria', text: 'Auditoría y Backups', icon: ShieldCheckIcon },
 ];
 
-const actionLinks: { to: string; text: string; icon: React.ElementType }[] = [];
-
-const Drawer: React.FC<DrawerProps> = ({ isOpen, setIsOpen, onLogout, isCollapsed, setIsCollapsed }) => {
+const DirectorDrawer: React.FC<DirectorDrawerProps> = ({ isOpen, setIsOpen, onLogout, isCollapsed, setIsCollapsed }) => {
     const location = useLocation();
 
     // FIX: Using React.FC with an interface for props to avoid potential issues with TypeScript's JSX type inference.
@@ -73,8 +74,8 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, setIsOpen, onLogout, isCollapse
                         <div className={`flex items-center space-x-3 overflow-hidden flex-1 transition-opacity duration-300 ${isCollapsed ? 'lg:opacity-0' : 'lg:opacity-100'}`}>
                             <UserAvatar />
                             <div className="whitespace-nowrap">
-                                <h2 className="font-semibold">{mockUser.name}</h2>
-                                <p className="text-xs text-slate-500">Preceptora</p>
+                                <h2 className="font-semibold">{mockDirectorUser.name}</h2>
+                                <p className="text-xs text-slate-500">{mockDirectorUser.role}</p>
                             </div>
                         </div>
                         
@@ -100,7 +101,6 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, setIsOpen, onLogout, isCollapse
                         </div>
                         <div>
                             <div className="space-y-1">
-                                {actionLinks.map((link) => <NavLinkItem key={link.to} to={link.to} text={link.text} icon={link.icon} />)}
                                 <a
                                     href="#"
                                     onClick={(e) => { e.preventDefault(); onLogout(); }}
@@ -118,4 +118,4 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, setIsOpen, onLogout, isCollapse
     );
 };
 
-export default Drawer;
+export default DirectorDrawer;

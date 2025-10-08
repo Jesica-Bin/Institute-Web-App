@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRequests } from '../store';
 import { RequestStatus, StudentRequest } from '../types';
@@ -29,16 +30,16 @@ const DetailPlaceholder: React.FC<{ icon: React.ElementType; message: string; }>
 const RequestsScreen: React.FC = () => {
     const navigate = useNavigate();
     const requests = getRequests();
-    const [selectedRequest, setSelectedRequest] = useState<StudentRequest | null>(null);
-    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+    const [selectedRequest, setSelectedRequest] = React.useState<StudentRequest | null>(null);
+    const [isDesktop, setIsDesktop] = React.useState(window.innerWidth >= 1024);
 
-    useEffect(() => {
+    React.useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (isDesktop) {
             const selectionInList = requests.some(r => r.id === selectedRequest?.id);
             if (requests.length > 0 && !selectionInList) {

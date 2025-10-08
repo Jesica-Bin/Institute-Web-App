@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import * as React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { mockStudents, mockCareers, mockYears, courseData } from '../data';
 import { StudentAttendance, AttendanceStatus } from '../types';
@@ -10,6 +11,8 @@ const AttendanceButton = ({ status, selected, onClick }: { status: string, selec
     const colorClasses = {
         P: 'bg-green-100 text-green-700 border-green-300',
         A: 'bg-red-100 text-red-700 border-red-300',
+        T: 'bg-amber-100 text-amber-700 border-amber-300',
+        J: 'bg-indigo-100 text-indigo-700 border-indigo-300',
     }[status] || 'bg-slate-200 text-slate-500 border-slate-300';
     
     const selectedClasses = selected ? 'border-2 scale-110 shadow-md' : 'border';
@@ -133,20 +136,20 @@ const TakeAttendanceScreen: React.FC = () => {
     const navigate = useNavigate();
     const { career: preselectedCareer, year: preselectedYear, subject: preselectedSubject } = location.state || {};
 
-    const [selectedCareer, setSelectedCareer] = useState(preselectedCareer || '');
-    const [selectedYear, setSelectedYear] = useState(preselectedYear || '');
-    const [selectedSubject, setSelectedSubject] = useState(preselectedSubject || '');
+    const [selectedCareer, setSelectedCareer] = React.useState(preselectedCareer || '');
+    const [selectedYear, setSelectedYear] = React.useState(preselectedYear || '');
+    const [selectedSubject, setSelectedSubject] = React.useState(preselectedSubject || '');
     
-    const [availableYears, setAvailableYears] = useState<string[]>(mockYears);
-    const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
-    const [students, setStudents] = useState<StudentAttendance[]>([]);
-    const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
-    const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
-    const [alertMessage, setAlertMessage] = useState<string | null>(null);
+    const [availableYears, setAvailableYears] = React.useState<string[]>(mockYears);
+    const [availableSubjects, setAvailableSubjects] = React.useState<string[]>([]);
+    const [students, setStudents] = React.useState<StudentAttendance[]>([]);
+    const [summaryData, setSummaryData] = React.useState<SummaryData | null>(null);
+    const [isSummaryModalOpen, setIsSummaryModalOpen] = React.useState(false);
+    const [alertMessage, setAlertMessage] = React.useState<string | null>(null);
 
     const isPrefilled = !!(preselectedCareer && preselectedYear && preselectedSubject);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (selectedCareer) {
             setAvailableYears(Object.keys(courseData[selectedCareer as keyof typeof courseData] || {}));
         } else {
@@ -154,7 +157,7 @@ const TakeAttendanceScreen: React.FC = () => {
         }
     }, [selectedCareer]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (selectedCareer && selectedYear) {
             setAvailableSubjects(courseData[selectedCareer as keyof typeof courseData]?.[selectedYear] || []);
         } else {
@@ -162,7 +165,7 @@ const TakeAttendanceScreen: React.FC = () => {
         }
     }, [selectedCareer, selectedYear]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (selectedCareer && selectedYear && selectedSubject) {
             const filteredStudents = mockStudents
                 .filter(s => s.carrera === selectedCareer)
@@ -343,6 +346,8 @@ const TakeAttendanceScreen: React.FC = () => {
                                         <div className="flex space-x-2">
                                             <AttendanceButton status="P" selected={student.status === AttendanceStatus.PRESENT} onClick={() => handleStatusChange(student.id, AttendanceStatus.PRESENT)} />
                                             <AttendanceButton status="A" selected={student.status === AttendanceStatus.ABSENT} onClick={() => handleStatusChange(student.id, AttendanceStatus.ABSENT)} />
+                                            <AttendanceButton status="T" selected={student.status === AttendanceStatus.LATE} onClick={() => handleStatusChange(student.id, AttendanceStatus.LATE)} />
+                                            <AttendanceButton status="J" selected={student.status === AttendanceStatus.JUSTIFIED} onClick={() => handleStatusChange(student.id, AttendanceStatus.JUSTIFIED)} />
                                         </div>
                                     </li>
                                 )) : (

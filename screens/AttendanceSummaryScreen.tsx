@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+
+
+import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mockYears, mockStudents, mockCareers, courseData } from '../data';
 import { LateStudent, AttendanceStatus } from '../types';
-import { ChevronRightIcon, ChevronLeftIcon, QrCodeIcon, DocumentChartBarIcon, CheckIcon, XMarkIcon, ChevronUpIcon, ChevronDownIcon } from '../components/Icons';
+import { ChevronRightIcon, ChevronLeftIcon, QrCodeIcon, DocumentChartBarIcon, CheckIcon, XMarkIcon, ChevronUpIcon, ChevronDownIcon, CalendarIcon } from '../components/Icons';
 import { getTodayAttendanceForSubject, setTodayAttendanceForSubject, getTodayLateReasonsForSubject, deleteTodayLateReasonForStudent } from '../store';
 
 // State when no course/subject is selected
@@ -49,8 +51,8 @@ const StatItem = ({ label, value, color }: { label: string, value: number, color
     </div>
 );
 
-const PieChart = ({ present, absent, late, className }: { present: number, absent: number, late: number, className?: string }) => {
-    const total = present + absent + late;
+const PieChart = ({ present, absent, late, justified, className }: { present: number, absent: number, late: number, justified: number, className?: string }) => {
+    const total = present + absent + late + justified;
     if (total === 0) { // Should not happen with new logic but good as a fallback
         return <div className={className}></div>;
     }
@@ -59,6 +61,7 @@ const PieChart = ({ present, absent, late, className }: { present: number, absen
     const presentStroke = (present / total) * circumference;
     const absentStroke = (absent / total) * circumference;
     const lateStroke = (late / total) * circumference;
+    const justifiedStroke = (justified / total) * circumference;
 
     return (
         <div className={`relative flex items-center justify-center ${className}`}>
@@ -90,6 +93,14 @@ const PieChart = ({ present, absent, late, className }: { present: number, absen
                     strokeLinecap="round"
                     strokeDashoffset={-(presentStroke + absentStroke)}
                 />
+                {/* Justified */}
+                <circle 
+                    cx="50" cy="50" r="45" fill="none" strokeWidth="10" 
+                    className="stroke-indigo-500"
+                    strokeDasharray={`${justifiedStroke} ${circumference}`}
+                    strokeLinecap="round"
+                    strokeDashoffset={-(presentStroke + absentStroke + lateStroke)}
+                />
             </svg>
         </div>
     );
@@ -99,7 +110,7 @@ const LateArrivalsInbox: React.FC<{
   students: LateStudent[];
   onResolve: (studentId: number, status: 'present' | 'absent') => void;
 }> = ({ students, onResolve }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = React.useState(true);
 
   return (
     <div className="w-full lg:w-5/12 rounded-lg flex flex-col order-2 lg:order-1 shadow-sm">
@@ -156,28 +167,28 @@ const LateArrivalsInbox: React.FC<{
 
 const AttendanceSummaryScreen: React.FC = () => {
     const navigate = useNavigate();
-    const [currentCareerIndex, setCurrentCareerIndex] = useState(0);
+    const [currentCareerIndex, setCurrentCareerIndex] = React.useState(0);
 
-    const [selectedYear, setSelectedYear] = useState('');
-    const [selectedSubject, setSelectedSubject] = useState('');
+    const [selectedYear, setSelectedYear] = React.useState('');
+    const [selectedSubject, setSelectedSubject] = React.useState('');
 
-    const availableYears = useMemo(() => {
+    const availableYears = React.useMemo(() => {
         const career = mockCareers[currentCareerIndex];
         return Object.keys(courseData[career as keyof typeof courseData] || {});
     }, [currentCareerIndex]);
 
-    const availableSubjects = useMemo(() => {
+    const availableSubjects = React.useMemo(() => {
         const career = mockCareers[currentCareerIndex];
         if (!selectedYear) return [];
         return courseData[career as keyof typeof courseData]?.[selectedYear] || [];
     }, [currentCareerIndex, selectedYear]);
     
-    const [lateStudents, setLateStudents] = useState<LateStudent[]>([]);
-    const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, late: 0 });
+    const [lateStudents, setLateStudents] = React.useState<LateStudent[]>([]);
+    const [attendanceStats, setAttendanceStats] = React.useState({ present: 0, absent: 0, late: 0, justified: 0 });
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (!selectedSubject) {
-            setAttendanceStats({ present: 0, absent: 0, late: 0 });
+            setAttendanceStats({ present: 0, absent: 0, late: 0, justified: 0 });
             setLateStudents([]);
             return;
         }
@@ -191,6 +202,7 @@ const AttendanceSummaryScreen: React.FC = () => {
             let presentCount = 0;
             let absentCount = 0;
             let lateCount = 0;
+            let justifiedCount = 0;
             const lateStudentsList: LateStudent[] = [];
 
             studentsInCareer.forEach(student => {
@@ -211,12 +223,15 @@ const AttendanceSummaryScreen: React.FC = () => {
                             reason: todaysLateReasons?.[student.id] || 'Motivo no especificado.'
                         });
                         break;
+                    case AttendanceStatus.JUSTIFIED:
+                        justifiedCount++;
+                        break;
                 }
             });
-            setAttendanceStats({ present: presentCount, absent: absentCount, late: lateCount });
+            setAttendanceStats({ present: presentCount, absent: absentCount, late: lateCount, justified: justifiedCount });
             setLateStudents(lateStudentsList);
         } else {
-            setAttendanceStats({ present: 0, absent: 0, late: 0 });
+            setAttendanceStats({ present: 0, absent: 0, late: 0, justified: 0 });
             setLateStudents([]);
         }
 
@@ -261,7 +276,7 @@ const AttendanceSummaryScreen: React.FC = () => {
     };
 
     const isSelectionMissing = !selectedYear || !selectedSubject;
-    const noDataForSelection = !isSelectionMissing && (attendanceStats.present + attendanceStats.absent + attendanceStats.late === 0);
+    const noDataForSelection = !isSelectionMissing && (attendanceStats.present + attendanceStats.absent + attendanceStats.late + attendanceStats.justified === 0);
     const chartClassName = "w-[140px] h-[140px] lg:w-[220px] lg:h-[220px]";
 
     return (
@@ -311,12 +326,14 @@ const AttendanceSummaryScreen: React.FC = () => {
                                     present={attendanceStats.present} 
                                     absent={attendanceStats.absent} 
                                     late={attendanceStats.late}
+                                    justified={attendanceStats.justified}
                                     className={chartClassName}
                                 />
                                 <div className="space-y-3 text-left">
                                     <StatItem label="Presentes" value={attendanceStats.present} color="bg-green-500" />
                                     <StatItem label="Ausentes" value={attendanceStats.absent} color="bg-red-500" />
                                     <StatItem label="Tardes" value={attendanceStats.late} color="bg-amber-500" />
+                                    <StatItem label="Justificados" value={attendanceStats.justified} color="bg-indigo-500" />
                                 </div>
                             </div>
                         </div>
@@ -329,21 +346,28 @@ const AttendanceSummaryScreen: React.FC = () => {
                 )}
 
                 {/* Buttons section */}
-                <div className="pt-6 border-t border-slate-100">
-                    <div className="grid grid-cols-2 gap-4">
+                <div className="pt-6 border-t border-slate-100 space-y-6">
+                    <button
+                        onClick={handleTakeAttendance}
+                        className="w-full flex items-center justify-between px-6 py-4 bg-amber-400 text-amber-900 font-bold rounded-lg hover:bg-amber-500 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                    >
+                        <span>Tomar Asistencia</span>
+                        <ChevronRightIcon className="w-5 h-5" />
+                    </button>
+                    <div className="grid grid-cols-2 gap-6">
                         <button
-                            onClick={handleTakeAttendance}
-                            className="w-full flex flex-col items-center justify-center p-6 bg-indigo-800 text-white rounded-xl h-40 hover:bg-indigo-900 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            onClick={() => navigate('/gestion-eventos')}
+                            className="flex flex-col items-center justify-center p-6 bg-indigo-800 text-white rounded-xl h-40 hover:bg-indigo-900 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                         >
-                            <QrCodeIcon className="w-10 h-10 mb-2" />
-                            <span className="font-semibold text-center">Tomar asistencia</span>
+                            <CalendarIcon className="w-10 h-10 mb-2" />
+                            <span className="font-semibold text-center">Gestionar Eventos (QR)</span>
                         </button>
                         <button
                             onClick={() => navigate('/reportes')}
-                            className="w-full flex flex-col items-center justify-center p-6 bg-indigo-800 text-white rounded-xl h-40 hover:bg-indigo-900 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600"
+                            className="flex flex-col items-center justify-center p-6 bg-indigo-800 text-white rounded-xl h-40 hover:bg-indigo-900 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                         >
                             <DocumentChartBarIcon className="w-10 h-10 mb-2" />
-                            <span className="font-semibold text-center">Ver reportes</span>
+                            <span className="font-semibold text-center">Ver Reportes</span>
                         </button>
                     </div>
                 </div>

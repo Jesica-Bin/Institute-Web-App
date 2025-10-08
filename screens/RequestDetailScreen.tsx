@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { RequestStatus, StudentRequest } from '../types';
 
@@ -17,10 +18,10 @@ const RequestDetailScreen: React.FC<RequestDetailScreenProps> = ({ request: prop
     const location = useLocation();
     const initialRequest = propRequest || location.state?.request as StudentRequest;
 
-    const [request, setRequest] = useState<StudentRequest | null>(initialRequest);
-    const [status, setStatus] = useState<RequestStatus | undefined>(initialRequest?.status);
+    const [request, setRequest] = React.useState<StudentRequest | null>(initialRequest);
+    const [status, setStatus] = React.useState<RequestStatus | undefined>(initialRequest?.status);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (initialRequest) {
             setRequest(initialRequest);
             setStatus(initialRequest.status);

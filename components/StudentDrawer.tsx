@@ -1,10 +1,10 @@
-import React from 'react';
+import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { mockStudentUser } from '../data';
 import { 
     HomeIcon, CheckBadgeIcon, UsersIcon, DocumentTextIcon, UserCircleIcon, 
-    Cog6ToothIcon, QuestionMarkCircleIcon, ArrowRightOnRectangleIcon, XMarkIcon,
-    MegaphoneIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, CalendarDaysIcon, QrCodeIcon
+    ArrowRightOnRectangleIcon, XMarkIcon,
+    ChevronDoubleLeftIcon, ChevronDoubleRightIcon, CalendarDaysIcon
 } from './Icons';
 
 interface StudentDrawerProps {
@@ -21,19 +21,20 @@ const navLinks = [
     { to: '/asistencia', text: 'Asistencia', icon: CheckBadgeIcon },
     { to: '/calendario-escolar', text: 'Calendario Institucional', icon: CalendarDaysIcon },
     { to: '/certificados', text: 'Certificados y constancias', icon: UsersIcon },
-    { to: '/sugerencias', text: 'Sugerencias y reclamos', icon: MegaphoneIcon },
-    { to: '/perfil', text: 'Mi perfil', icon: UserCircleIcon },
 ];
 
-const actionLinks = [
-    { to: '/configuracion', text: 'Configuración', icon: Cog6ToothIcon },
-    { to: '/ayuda', text: 'Ayuda', icon: QuestionMarkCircleIcon },
-];
+const actionLinks: { to: string; text: string; icon: React.ElementType }[] = [];
 
 const StudentDrawer: React.FC<StudentDrawerProps> = ({ isOpen, setIsOpen, onLogout, isCollapsed, setIsCollapsed }) => {
     const location = useLocation();
 
-    const NavLinkItem = ({ to, text, icon: Icon }: { to: string, text: string, icon: React.ElementType }) => {
+    // FIX: Using React.FC with an interface for props to avoid potential issues with TypeScript's JSX type inference.
+    interface NavLinkItemProps {
+      to: string;
+      text: string;
+      icon: React.ElementType;
+    }
+    const NavLinkItem: React.FC<NavLinkItemProps> = ({ to, text, icon: Icon }) => {
         const isActive = location.pathname === to;
         return (
             <Link
@@ -63,9 +64,9 @@ const StudentDrawer: React.FC<StudentDrawerProps> = ({ isOpen, setIsOpen, onLogo
                 onClick={() => setIsOpen(false)}
             />
             <aside
-                className={`fixed top-0 left-0 h-full bg-slate-50 shadow-lg z-30 transform transition-all duration-300 ease-in-out lg:translate-x-0 ${
-                    isOpen ? 'translate-x-0' : '-translate-x-full'
-                } ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}`}
+                className={`fixed top-0 left-0 h-full bg-slate-50 shadow-lg z-30 transform transition-all duration-300 ease-in-out -translate-x-full lg:translate-x-0 ${
+                    isCollapsed ? 'lg:w-20' : 'lg:w-64'
+                }`}
             >
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between p-4 border-b border-slate-200 h-[69px]">
@@ -94,14 +95,12 @@ const StudentDrawer: React.FC<StudentDrawerProps> = ({ isOpen, setIsOpen, onLogo
                         <div>
                             <h3 className={`px-4 text-xs font-bold uppercase text-slate-400 mb-2 whitespace-nowrap transition-opacity ${isCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Menú</h3>
                             <div className="space-y-1">
-                                {/* FIX: Destructured props for NavLinkItem to prevent passing invalid props. The 'key' prop is reserved by React and should not be passed to child components directly. */}
-                                {navLinks.map(({ to, text, icon }) => <NavLinkItem key={to} to={to} text={text} icon={icon} />)}
+                                {navLinks.map((link) => <NavLinkItem key={link.to} to={link.to} text={link.text} icon={link.icon} />)}
                             </div>
                         </div>
                         <div>
                             <div className="space-y-1">
-                                {/* FIX: Destructured props for NavLinkItem to prevent passing invalid props. The 'key' prop is reserved by React and should not be passed to child components directly. */}
-                                {actionLinks.map(({ to, text, icon }) => <NavLinkItem key={to} to={to} text={text} icon={icon} />)}
+                                {actionLinks.map((link) => <NavLinkItem key={link.to} to={link.to} text={link.text} icon={link.icon} />)}
                                 <a
                                     href="#"
                                     onClick={(e) => { e.preventDefault(); onLogout(); }}

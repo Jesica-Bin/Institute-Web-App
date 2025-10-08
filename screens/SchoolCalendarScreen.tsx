@@ -1,4 +1,6 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+
+
+import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCalendarEvents, setCalendarEvents } from '../store';
 import { CalendarEvent, ClassStatus, CalendarEventType } from '../types';
@@ -54,19 +56,20 @@ const addableEventTypes: { [key in CalendarEventType.HOLIDAY | CalendarEventType
 
 
 const SchoolCalendarScreen: React.FC = () => {
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState(new Date());
-    const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
-    const [events, setEvents] = useState<CalendarEvent[]>(getCalendarEvents());
-    const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
-    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
-    const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
-    const [swapCandidate, setSwapCandidate] = useState<CalendarEvent | null>(null);
-    const [menuState, setMenuState] = useState<{ event: CalendarEvent; position?: { top: number; left: number } } | null>(null);
-    const [expandedHours, setExpandedHours] = useState<string[]>([]);
-    const [mobileView, setMobileView] = useState<'calendar' | 'agenda'>('calendar');
+    const initialDate = new Date(2025, 9, 8); // October 8, 2025
+    const [currentDate, setCurrentDate] = React.useState(initialDate);
+    const [selectedDate, setSelectedDate] = React.useState(initialDate);
+    const [viewMode, setViewMode] = React.useState<'month' | 'week'>('month');
+    const [events, setEvents] = React.useState<CalendarEvent[]>(getCalendarEvents());
+    const [isAddEventModalOpen, setAddEventModalOpen] = React.useState(false);
+    const [isConfigModalOpen, setIsConfigModalOpen] = React.useState(false);
+    const [isSwapModalOpen, setIsSwapModalOpen] = React.useState(false);
+    const [swapCandidate, setSwapCandidate] = React.useState<CalendarEvent | null>(null);
+    const [menuState, setMenuState] = React.useState<{ event: CalendarEvent; position?: { top: number; left: number } } | null>(null);
+    const [expandedHours, setExpandedHours] = React.useState<string[]>([]);
+    const [mobileView, setMobileView] = React.useState<'calendar' | 'agenda'>('agenda');
     
-    const menuRef = useRef<HTMLDivElement>(null);
+    const menuRef = React.useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
 
     // Sync local state with global store
@@ -75,7 +78,7 @@ const SchoolCalendarScreen: React.FC = () => {
         setEvents(newEvents);
     };
 
-    useEffect(() => {
+    React.useEffect(() => {
         const loadAndProcessHolidays = async () => {
             const year = currentDate.getFullYear();
             const nationalHolidays = await fetchNationalHolidays(year);
@@ -116,7 +119,7 @@ const SchoolCalendarScreen: React.FC = () => {
         loadAndProcessHolidays();
     }, []); // Run only once on mount
 
-    useEffect(() => {
+    React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setMenuState(null);
@@ -126,7 +129,7 @@ const SchoolCalendarScreen: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const eventsByDate = useMemo(() => {
+    const eventsByDate = React.useMemo(() => {
         const grouped: { [key: string]: CalendarEvent[] } = {};
         events.forEach(event => {
             const dateKey = event.date;
@@ -136,7 +139,7 @@ const SchoolCalendarScreen: React.FC = () => {
         return grouped;
     }, [events]);
 
-    const agendaByHour = useMemo(() => {
+    const agendaByHour = React.useMemo(() => {
         const dateStr = selectedDate.toISOString().split('T')[0];
         const dayEvents = (eventsByDate[dateStr] || []).filter(e => e.type === CalendarEventType.CLASS);
         
@@ -147,17 +150,19 @@ const SchoolCalendarScreen: React.FC = () => {
             grouped[timeKey].push(event);
         });
         
-        const sortedHours = Object.keys(grouped).sort();
-        if (sortedHours.length > 0 && expandedHours.length === 0) {
-            setExpandedHours([sortedHours[0]]);
-        } else if (sortedHours.length === 0) {
-            setExpandedHours([]);
-        }
-
         return grouped;
     }, [selectedDate, eventsByDate]);
+
+     React.useEffect(() => {
+        const sortedHours = Object.keys(agendaByHour).sort();
+        if (sortedHours.length > 0) {
+            setExpandedHours([sortedHours[0]]);
+        } else {
+            setExpandedHours([]);
+        }
+    }, [selectedDate, agendaByHour]);
     
-    const nonClassEventsForSelectedDay = useMemo(() => {
+    const nonClassEventsForSelectedDay = React.useMemo(() => {
         const dateStr = selectedDate.toISOString().split('T')[0];
         return (eventsByDate[dateStr] || []).filter(e => e.type !== CalendarEventType.CLASS);
     }, [selectedDate, eventsByDate]);
@@ -327,9 +332,9 @@ const SchoolCalendarScreen: React.FC = () => {
     };
 
     const AddEventModal: React.FC<{ isOpen: boolean; onClose: () => void; onAddEvent: (event: Omit<CalendarEvent, 'id'>) => void; selectedDate: Date; }> = ({ isOpen, onClose, onAddEvent, selectedDate }) => {
-        const [type, setType] = useState<CalendarEventType>(CalendarEventType.HOLIDAY);
-        const [title, setTitle] = useState('');
-        const [description, setDescription] = useState('');
+        const [type, setType] = React.useState<CalendarEventType>(CalendarEventType.HOLIDAY);
+        const [title, setTitle] = React.useState('');
+        const [description, setDescription] = React.useState('');
 
         if (!isOpen) return null;
 
@@ -376,15 +381,15 @@ const SchoolCalendarScreen: React.FC = () => {
 
     const ConfigModal: React.FC<{ isOpen: boolean; onClose: () => void; }> = ({ isOpen, onClose }) => {
         const schoolYear = getSchoolYear();
-        const [startDate, setStartDate] = useState(schoolYear.startDate || '');
-        const [endDate, setEndDate] = useState(schoolYear.endDate || '');
-        const [winterStart, setWinterStart] = useState(schoolYear.winterBreakStartDate || '');
-        const [winterEnd, setWinterEnd] = useState(schoolYear.winterBreakEndDate || '');
+        const [startDate, setStartDate] = React.useState(schoolYear.startDate || '');
+        const [endDate, setEndDate] = React.useState(schoolYear.endDate || '');
+        const [winterStart, setWinterStart] = React.useState(schoolYear.winterBreakStartDate || '');
+        const [winterEnd, setWinterEnd] = React.useState(schoolYear.winterBreakEndDate || '');
 
-        const startDateRef = useRef<HTMLInputElement>(null);
-        const endDateRef = useRef<HTMLInputElement>(null);
-        const winterStartRef = useRef<HTMLInputElement>(null);
-        const winterEndRef = useRef<HTMLInputElement>(null);
+        const startDateRef = React.useRef<HTMLInputElement>(null);
+        const endDateRef = React.useRef<HTMLInputElement>(null);
+        const winterStartRef = React.useRef<HTMLInputElement>(null);
+        const winterEndRef = React.useRef<HTMLInputElement>(null);
 
         const handleDateIconClick = (ref: React.RefObject<HTMLInputElement>) => {
             if (ref.current) { try { ref.current.showPicker(); } catch (error) { ref.current.focus(); } }
@@ -476,11 +481,11 @@ const SchoolCalendarScreen: React.FC = () => {
         isOpen: boolean; onClose: () => void; onConfirm: (event1: CalendarEvent, event2: CalendarEvent) => void;
         eventToSwap: CalendarEvent | null; allEvents: CalendarEvent[];
     }> = ({ isOpen, onClose, onConfirm, eventToSwap, allEvents }) => {
-        const [displayWeek, setDisplayWeek] = useState<Date[]>([]);
-        const [targetDate, setTargetDate] = useState<Date | null>(null);
-        const [targetEvent, setTargetEvent] = useState<CalendarEvent | null>(null);
+        const [displayWeek, setDisplayWeek] = React.useState<Date[]>([]);
+        const [targetDate, setTargetDate] = React.useState<Date | null>(null);
+        const [targetEvent, setTargetEvent] = React.useState<CalendarEvent | null>(null);
 
-        useEffect(() => {
+        React.useEffect(() => {
             if (isOpen && eventToSwap) {
                 const initialDate = new Date(eventToSwap.date + 'T00:00:00');
                 setTargetDate(initialDate);
@@ -535,10 +540,11 @@ const SchoolCalendarScreen: React.FC = () => {
     const ColorLegend = () => (<div className="bg-white p-4 rounded-lg shadow-sm"><div className="flex items-center space-x-2 mb-2"><InformationCircleIcon className="w-5 h-5 text-slate-500" /><h3 className="font-semibold text-slate-700">Leyenda</h3></div><div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm"><div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-indigo-500"></div><span>Clase Normal</span></div><div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-red-500"></div><span>Feriado</span></div><div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-slate-400"></div><span>Clases Suspendidas</span></div></div></div>);
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    const monthDays = useMemo(() => getDaysInMonth(year, month), [year, month]);
+    const monthDays = React.useMemo(() => getDaysInMonth(year, month), [year, month]);
+    const weekDays = React.useMemo(() => getWeekDays(currentDate), [currentDate]);
     const firstDayOfMonth = monthDays.length > 0 ? monthDays[0].getDay() : 0;
-    const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
     const dotColors: { [key: string]: string } = { 'normal': 'bg-indigo-500', 'holiday': 'bg-red-500', 'canceled': 'bg-slate-400' };
+    const sortedAgendaHours = Object.keys(agendaByHour).sort();
 
     const CalendarDay: React.FC<{ day: Date, isMini?: boolean }> = ({ day, isMini }) => {
         const dayStr = day.toISOString().split('T')[0];
@@ -554,8 +560,6 @@ const SchoolCalendarScreen: React.FC = () => {
 
         return (<button onClick={() => setSelectedDate(day)} className={`${sizeClass} flex flex-col items-center justify-center rounded-full transition-colors text-sm`}><span className={`${spanSize} rounded-full flex items-center justify-center ${cellClass}`}>{day.getDate()}</span>{status !== 'default' && !isSelected && <div className={`-mt-1 w-1.5 h-1.5 rounded-full ${dotColors[status]}`}></div>}</button>);
     };
-
-    const sortedAgendaHours = Object.keys(agendaByHour).sort();
 
     return (
         <div className="space-y-6">
@@ -586,29 +590,100 @@ const SchoolCalendarScreen: React.FC = () => {
             </div>
 
             <div className="lg:hidden space-y-4">
-                <div className="flex space-x-1 bg-slate-100 p-1 rounded-full"><button onClick={() => setMobileView('calendar')} className={`flex-1 py-2 text-sm rounded-full ${mobileView === 'calendar' ? 'bg-white shadow font-semibold' : 'hover:bg-slate-200'}`}>Calendario</button><button onClick={() => setMobileView('agenda')} className={`flex-1 py-2 text-sm rounded-full ${mobileView === 'agenda' ? 'bg-white shadow font-semibold' : 'hover:bg-slate-200'}`}>Agenda</button></div>
-                {mobileView === 'calendar' && (
-                    <div className="space-y-4">
-                        <div className="bg-white p-4 rounded-lg shadow-sm">
+                 <div className="bg-white rounded-lg shadow-sm">
+                    <div className="p-3">
+                         <div className="bg-slate-100 p-1 rounded-full flex items-center justify-center space-x-1">
+                            <button
+                                onClick={() => setMobileView('calendar')}
+                                className={`w-full py-2 px-4 text-center text-sm font-semibold rounded-full transition-colors ${
+                                    mobileView === 'calendar'
+                                        ? 'bg-white text-indigo-700 shadow'
+                                        : 'text-slate-500'
+                                }`}
+                            >
+                                Calendario
+                            </button>
+                            <button
+                                onClick={() => setMobileView('agenda')}
+                                className={`w-full py-2 px-4 text-center text-sm font-semibold rounded-full transition-colors ${
+                                    mobileView === 'agenda'
+                                        ? 'bg-white text-indigo-700 shadow'
+                                        : 'text-slate-500'
+                                }`}
+                            >
+                                Agenda
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {mobileView === 'calendar' && (
+                        <div className="p-4 border-t border-slate-100">
                              <div className="flex justify-between items-center mb-2"><button onClick={handlePrev} className="p-2 rounded-full hover:bg-slate-100"><ChevronLeftIcon className="w-5 h-5"/></button><h2 className="text-lg font-bold text-indigo-800 text-center">{viewMode === 'month' ? `${monthNames[month]} ${year}` : `Semana del ${weekDays[0].getDate()}`}</h2><button onClick={handleNext} className="p-2 rounded-full hover:bg-slate-100"><ChevronRightIcon className="w-5 h-5"/></button></div>
                             <div className="flex space-x-1 bg-slate-100 p-1 rounded-full mb-2"><button onClick={() => setViewMode('month')} className={`flex-1 py-1 text-sm rounded-full ${viewMode === 'month' ? 'bg-white shadow font-semibold' : ''}`}>Mes</button><button onClick={() => setViewMode('week')} className={`flex-1 py-1 text-sm rounded-full ${viewMode === 'week' ? 'bg-white shadow font-semibold' : ''}`}>Semana</button></div>
                             <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500 mb-2">{daysOfWeek.map(day => <div key={day}>{day}</div>)}</div>
                             <div className="grid grid-cols-7 gap-1 place-items-center">{viewMode === 'month' ? (<>{Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`}></div>)}{monthDays.map(day => <CalendarDay key={day.toISOString()} day={day} />)}</>) : (weekDays.map(day => <CalendarDay key={day.toISOString()} day={day} />))}</div>
                         </div>
+                    )}
+
+                    {mobileView === 'agenda' && (
+                         <div>
+                            <div className="p-4 border-t border-slate-100">
+                                <h3 className="text-lg font-bold text-slate-800">Agenda del {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
+                            </div>
+                            <div className="divide-y divide-slate-100">
+                                {nonClassEventsForSelectedDay.length > 0 && (
+                                    <div className="p-4 text-center bg-slate-50">
+                                    {nonClassEventsForSelectedDay.map(event => (
+                                        <div key={event.id}>
+                                            <p className="font-semibold text-slate-700">{event.title}</p>
+                                            {event.description && <p className="text-sm text-slate-500">{event.description}</p>}
+                                        </div>
+                                    ))}
+                                    </div>
+                                )}
+                                {sortedAgendaHours.length > 0 ? (
+                                    sortedAgendaHours.map(hour => (
+                                        <div key={hour}>
+                                            <button
+                                                onClick={() => handleToggleHourMobile(hour)}
+                                                className="w-full flex justify-between items-center text-left p-4 hover:bg-slate-50"
+                                            >
+                                                <h4 className="font-semibold text-slate-800">{hour} hs</h4>
+                                                <ChevronDownIcon
+                                                    className={`w-5 h-5 text-slate-500 transition-transform ${
+                                                        expandedHours.includes(hour) ? 'rotate-180' : ''
+                                                    }`}
+                                                />
+                                            </button>
+                                            {expandedHours.includes(hour) && (
+                                                <div className="pb-4 px-4 space-y-2">
+                                                    {agendaByHour[hour].map(event => (
+                                                        <TimetableItem key={event.id} event={event} />
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex items-center justify-center h-48 text-center text-slate-500">
+                                        <p>No hay clases programadas.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {mobileView === 'calendar' && (
+                    <div className="space-y-4">
                         <ColorLegend />
                         <div className="bg-white p-4 rounded-lg shadow-sm">
                             <h3 className="font-semibold text-slate-700 mb-3">Eventos del {selectedDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</h3>
                             <div className="space-y-2">{nonClassEventsForSelectedDay.length > 0 ? nonClassEventsForSelectedDay.map(event => (<div key={event.id} className="bg-slate-100 p-3 rounded-lg text-center"><p className="font-semibold text-slate-700">{event.title}</p>{event.description && <p className="text-sm text-slate-500">{event.description}</p>}</div>)) : <p className="text-sm text-center text-slate-500 py-4">No hay eventos para este día.</p>}</div>
                         </div>
-                        <div className="fixed bottom-6 right-6 flex flex-col space-y-3"><button onClick={() => setIsConfigModalOpen(true)} className="bg-slate-800 text-white p-4 rounded-full shadow-lg hover:bg-slate-900"><CalendarDaysIcon className="w-6 h-6"/></button><button onClick={() => setAddEventModalOpen(true)} className="bg-indigo-700 text-white p-4 rounded-full shadow-lg hover:bg-indigo-800"><PlusIcon className="w-6 h-6" /></button></div>
                     </div>
                 )}
-                {mobileView === 'agenda' && (
-                     <div className="bg-white p-4 rounded-lg shadow-sm">
-                        <div className="pb-4 border-b border-slate-200"><h3 className="text-lg font-bold">Agenda del {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</h3></div>
-                        <div className="mt-4 space-y-4">{sortedAgendaHours.length > 0 ? sortedAgendaHours.map(hour => (<div key={hour}><button onClick={() => handleToggleHourMobile(hour)} className="w-full flex justify-between items-center text-left p-3 bg-slate-50 rounded-lg"><h4 className="font-bold text-indigo-700">{hour} hs</h4>{expandedHours.includes(hour) ? <ChevronUpIcon className="w-5 h-5 text-indigo-700"/> : <ChevronDownIcon className="w-5 h-5 text-indigo-700"/>}</button>{expandedHours.includes(hour) && (<div className="pt-3">{agendaByHour[hour].map(event => <TimetableItem key={event.id} event={event} />)}</div>)}</div>)) : (<div className="flex items-center justify-center h-60 text-center text-slate-500"><p>No hay clases programadas.</p></div>)}</div>
-                    </div>
-                )}
+                <div className="fixed bottom-24 right-6 flex flex-col space-y-3"><button onClick={() => setIsConfigModalOpen(true)} className="bg-slate-800 text-white p-4 rounded-full shadow-lg hover:bg-slate-900"><CalendarDaysIcon className="w-6 h-6"/></button><button onClick={() => setAddEventModalOpen(true)} className="bg-indigo-700 text-white p-4 rounded-full shadow-lg hover:bg-indigo-800"><PlusIcon className="w-6 h-6" /></button></div>
             </div>
             <AddEventModal isOpen={isAddEventModalOpen} onClose={() => setAddEventModalOpen(false)} onAddEvent={handleAddEvent} selectedDate={selectedDate} />
             <ConfigModal isOpen={isConfigModalOpen} onClose={() => setIsConfigModalOpen(false)} />

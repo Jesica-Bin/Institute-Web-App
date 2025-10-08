@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+
+import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Student, StudentAttendanceStatus, RequestStatus, SubjectDetail } from '../types';
 import { UserCircleIcon } from '../components/Icons';
@@ -45,27 +46,27 @@ const RequestStatusBadge = ({ status }: { status: RequestStatus }) => {
 const StudentProfileScreen: React.FC<StudentProfileScreenProps> = ({ student: propStudent }) => {
     const location = useLocation();
     const student = propStudent || location.state?.student as Student;
-    const [selectedSubject, setSelectedSubject] = useState('all');
-    const [selectedSubjectDetails, setSelectedSubjectDetails] = useState<SubjectDetail | null>(null);
+    const [selectedSubject, setSelectedSubject] = React.useState('all');
+    const [selectedSubjectDetails, setSelectedSubjectDetails] = React.useState<SubjectDetail | null>(null);
 
-    const subjectsInCourse = useMemo(() => {
+    const subjectsInCourse = React.useMemo(() => {
         return Object.values(mockSubjectDetails).filter(s => s.status === 'cursando');
     }, []);
 
-    const filteredAttendance = useMemo(() => {
+    const filteredAttendance = React.useMemo(() => {
         if (selectedSubject === 'all') {
             return mockStudentAttendanceRecords;
         }
         return mockStudentAttendanceRecords.filter(record => record.subject === selectedSubject);
     }, [selectedSubject]);
 
-    const studentRequests = useMemo(() => {
+    const studentRequests = React.useMemo(() => {
         if (!student) return [];
         const studentFullName = `${student.name} ${student.lastName}`;
         return mockRequests.filter(req => req.studentName === studentFullName);
     }, [student]);
 
-    const attendanceSummary = useMemo(() => {
+    const attendanceSummary = React.useMemo(() => {
         if (selectedSubject === 'all' || !selectedSubjectDetails) {
             return null;
         }

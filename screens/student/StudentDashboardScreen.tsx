@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+
+import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { mockStudentUser, mockStudentWeeklySchedule, mockWeeklyAttendance, mockAllNotifications, mockEvents, mockStudentSubjects } from '../../data';
-import { EventStatus, NotificationType, AttendanceStatus } from '../../types';
+import { mockStudentUser, mockStudentWeeklySchedule, mockWeeklyAttendance, mockEvents, mockStudentSubjects } from '../../data';
+import { EventStatus, AttendanceStatus } from '../../types';
 import { getNotifiedAbsencesForStudent, setTodayLateReasonForStudent, clearStudentNotification, setTodayAttendanceForSubject } from '../../store';
 import { 
     ChevronLeftIcon, 
@@ -15,8 +16,8 @@ import {
     XMarkIcon,
     CheckIcon,
     PencilIcon,
-    WrenchScrewdriverIcon,
-    ExclamationCircleIconOutline
+    ExclamationCircleIconOutline,
+    ChatBubbleLeftRightIcon
 } from '../../components/Icons';
 
 // --- Reason Modal Component ---
@@ -26,10 +27,10 @@ const ReasonModal: React.FC<{
     onSave: (subject: string, reason: string) => void;
     subjects: string[];
 }> = ({ isOpen, onClose, onSave, subjects }) => {
-    const [reason, setReason] = useState('');
-    const [selectedSubject, setSelectedSubject] = useState(subjects[0] || '');
+    const [reason, setReason] = React.useState('');
+    const [selectedSubject, setSelectedSubject] = React.useState(subjects[0] || '');
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (isOpen) {
             setReason(''); // Reset reason when modal opens
             setSelectedSubject(subjects[0] || '');
@@ -69,44 +70,20 @@ const ReasonModal: React.FC<{
                             id="reason-textarea"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            rows={4}
+                            rows={3}
                             className="w-full p-2 bg-white text-slate-800 border border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                            placeholder="Ej: Tráfico, turno médico, etc."
-                            autoFocus
-                        />
+                            placeholder="Ej: Tráfico en la autopista, llego en 20 mins."
+                        ></textarea>
                     </div>
                 </div>
                 <div className="flex justify-end space-x-3 p-4 bg-slate-50 rounded-b-xl">
                     <button onClick={onClose} className="px-4 py-2 rounded-lg bg-slate-200 text-slate-800 font-semibold hover:bg-slate-300">Cancelar</button>
-                    <button onClick={handleSave} className="px-4 py-2 rounded-lg bg-indigo-700 text-white font-semibold hover:bg-indigo-800">Enviar</button>
+                    <button onClick={handleSave} className="px-4 py-2 rounded-lg bg-indigo-700 text-white font-semibold hover:bg-indigo-800">Guardar</button>
                 </div>
             </div>
         </div>
     );
 };
-
-
-// --- Late Notification Banner ---
-const LateNotificationBanner: React.FC<{ onNotify: () => void }> = ({ onNotify }) => (
-    <div className="bg-amber-50 p-3 sm:p-4 rounded-xl shadow-sm border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-amber-200 rounded-full flex items-center justify-center">
-                <ExclamationCircleIconOutline className="w-6 h-6 text-amber-700" />
-            </div>
-        </div>
-        <div className="flex-grow text-left">
-            <h3 className="font-bold text-amber-900">Asistencia registrada</h3>
-            <p className="text-sm text-amber-800 mt-1">La preceptora ha tomado asistencia y no te encuentras presente. ¿Estás llegando tarde?</p>
-        </div>
-        <button
-            onClick={onNotify}
-            className="w-full sm:w-auto mt-2 sm:mt-0 flex-shrink-0 bg-amber-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-amber-600 transition-colors text-sm"
-        >
-            Avisar tardanza
-        </button>
-    </div>
-);
-
 
 // --- Shortcut Management ---
 interface Shortcut {
@@ -116,30 +93,29 @@ interface Shortcut {
     icon: React.ElementType;
 }
 
-const ALL_SHORTCUTS: Shortcut[] = [
-    { key: 'materias', to: '/mis-materias', text: 'Mis Materias', icon: DocumentTextIcon },
+const ALL_STUDENT_SHORTCUTS: Shortcut[] = [
+    { key: 'materias', to: '/mis-materias', text: 'Materias', icon: DocumentTextIcon },
+    { key: 'asistencia', to: '/asistencia', text: 'Asistencia', icon: CheckBadgeIcon },
+    { key: 'calendario', to: '/calendario-escolar', text: 'Calendario', icon: CalendarIcon },
     { key: 'certificados', to: '/certificados', text: 'Certificados', icon: UsersIcon },
     { key: 'sugerencias', to: '/sugerencias', text: 'Sugerencias', icon: MegaphoneIcon },
-    { key: 'asistencia', to: '/asistencia', text: 'Asistencia', icon: CheckBadgeIcon },
-    { key: 'eventos', to: '/eventos-qr', text: 'Eventos', icon: CalendarIcon }
 ];
 const MAX_SHORTCUTS = 4;
 
-// --- Modal Component for Managing Shortcuts ---
 const ManageShortcutsModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
     onSave: (selectedKeys: string[]) => void;
     currentShortcutKeys: string[];
 }> = ({ isOpen, onClose, onSave, currentShortcutKeys }) => {
-    const [selectedKeys, setSelectedKeys] = useState(currentShortcutKeys);
+    const [selectedKeys, setSelectedKeys] = React.useState(currentShortcutKeys);
 
     React.useEffect(() => {
         if (isOpen) {
             setSelectedKeys(currentShortcutKeys);
         }
     }, [isOpen, currentShortcutKeys]);
-    
+
     const handleToggle = (key: string) => {
         setSelectedKeys(prev => 
             prev.includes(key) 
@@ -166,7 +142,7 @@ const ManageShortcutsModal: React.FC<{
                 <div className="p-6">
                     <p className="text-sm text-slate-500 mb-4">Selecciona los atajos que quieres ver en tu panel de inicio (máx. {MAX_SHORTCUTS}).</p>
                     <div className="space-y-3">
-                        {ALL_SHORTCUTS.map(shortcut => {
+                        {ALL_STUDENT_SHORTCUTS.map(shortcut => {
                             const isSelected = selectedKeys.includes(shortcut.key);
                             const isDisabled = !isSelected && selectedKeys.length >= MAX_SHORTCUTS;
                             return (
@@ -202,300 +178,226 @@ const ManageShortcutsModal: React.FC<{
     );
 };
 
-
-const NotificationIcon = ({ type }: { type: NotificationType }) => {
-    const iconProps = { className: "w-5 h-5 text-slate-500" };
-    switch (type) {
-        case NotificationType.SYSTEM:
-            return <WrenchScrewdriverIcon {...iconProps} />;
-        case NotificationType.OFFICIAL:
-            return <MegaphoneIcon {...iconProps} />;
-        default:
-            return null;
-    }
-};
-
-const ShortcutButton = ({ to, text, icon: Icon }: { to: string, text: string, icon: React.ElementType }) => (
-    <Link to={to} className="flex flex-col items-center justify-center p-4 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+// FIX: Using React.FC with an interface for props to avoid potential issues with TypeScript's JSX type inference.
+interface ShortcutButtonProps {
+  to: string;
+  text: string;
+  icon: React.ElementType;
+}
+const ShortcutButton: React.FC<ShortcutButtonProps> = ({ to, text, icon: Icon }) => (
+    <Link to={to} className="flex flex-col items-center justify-center p-4 bg-white rounded-lg hover:bg-slate-100 transition-colors">
         <Icon className="w-8 h-8 text-indigo-700 mb-2" />
         <span className="text-sm font-semibold text-slate-800 text-center">{text}</span>
     </Link>
 );
 
-const ActiveEventBanner = ({ event }: { event: { name: string } }) => (
-    <div className="bg-green-50 p-3 sm:p-4 rounded-xl shadow-sm border border-green-200 flex flex-row items-center gap-3 sm:gap-4">
-        <div className="flex-shrink-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-200 rounded-full flex items-center justify-center">
-                <CalendarIcon className="w-6 h-6 sm:w-7 sm:h-7 text-green-700" />
-            </div>
-        </div>
-        <div className="flex-grow text-left">
-            <p className="text-xs sm:text-sm text-green-700 font-semibold">¡Evento Activo!</p>
-            <h3 className="font-bold text-green-900 text-sm sm:text-base leading-tight">{event.name}</h3>
-        </div>
-        <Link
-            to="/eventos-qr"
-            className="flex-shrink-0 bg-green-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap text-center text-sm"
-        >
-            Ir
-        </Link>
-    </div>
-);
-
-
 const StudentDashboardScreen: React.FC = () => {
-    const [shortcuts, setShortcuts] = useState<Shortcut[]>([
-        ALL_SHORTCUTS.find(s => s.key === 'materias')!,
-        ALL_SHORTCUTS.find(s => s.key === 'certificados')!,
-        ALL_SHORTCUTS.find(s => s.key === 'sugerencias')!,
-    ]);
-    const [isShortcutsModalOpen, setShortcutsModalOpen] = useState(false);
-    const [lateNotificationSubjects, setLateNotificationSubjects] = useState<string[]>([]);
-    const [isReasonModalOpen, setIsReasonModalOpen] = useState(false);
+    const [today] = React.useState(new Date());
+    const [isReasonModalOpen, setIsReasonModalOpen] = React.useState(false);
 
-    useEffect(() => {
-        // Check for late notifications on component mount
-        const today = new Date().toISOString().split('T')[0];
-        // Assuming student ID is 1 for this mock. In a real app, this would be the logged-in user's ID.
-        const studentId = 1;
-        const notifiedSubjects = getNotifiedAbsencesForStudent(today, studentId);
-        setLateNotificationSubjects(notifiedSubjects);
-    }, []);
+    // --- Absence Notifications ---
+    const todayStr = today.toISOString().split('T')[0];
+    const initialAbsences = getNotifiedAbsencesForStudent(todayStr, 1); // Mock student ID 1
+    const [notifiedAbsences, setNotifiedAbsences] = React.useState<string[]>(initialAbsences);
+
+    const handleClearNotification = (subject: string) => {
+        clearStudentNotification(todayStr, subject, 1);
+        setNotifiedAbsences(prev => prev.filter(s => s !== subject));
+    };
+
+    // --- Late Arrival Logic ---
+    const handleSaveLateReason = (subject: string, reason: string) => {
+        setTodayAttendanceForSubject(subject, { 1: AttendanceStatus.LATE }); // Mock student ID 1
+        setTodayLateReasonForStudent(subject, 1, reason); // Mock student ID 1
+        setIsReasonModalOpen(false);
+        alert(`Aviso de tardanza enviado para ${subject}.`);
+    };
+
+    // --- Schedule Logic ---
+    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const currentDayName = days[today.getDay()];
+    const todaySchedule = mockStudentWeeklySchedule[currentDayName] || [];
+
+    // --- Shortcuts Logic ---
+    const [shortcutKeys, setShortcutKeys] = React.useState(['materias', 'asistencia', 'calendario']);
+    const [isShortcutModalOpen, setIsShortcutModalOpen] = React.useState(false);
+
+    const shortcutButtons = shortcutKeys.map(key => ALL_STUDENT_SHORTCUTS.find(s => s.key === key)).filter(Boolean) as Shortcut[];
 
     const handleSaveShortcuts = (newKeys: string[]) => {
-        const newShortcutList = ALL_SHORTCUTS.filter(s => newKeys.includes(s.key));
-        setShortcuts(newShortcutList);
-        setShortcutsModalOpen(false);
+        setShortcutKeys(newKeys);
+        setIsShortcutModalOpen(false);
     };
 
-     const handleSaveReason = (subject: string, reason: string) => {
-        const today = new Date().toISOString().split('T')[0];
-        const studentId = 1; // Mock student ID
+    // --- Weekly Attendance Data ---
+    const attendanceData = [
+        { day: 'Lun', status: 'P' },
+        { day: 'Mar', status: 'P' },
+        { day: 'Mie', status: 'A' },
+        { day: 'Jue', status: 'P' },
+        { day: 'Vie', status: 'J' },
+    ];
 
-        setTodayAttendanceForSubject(subject, { [studentId]: AttendanceStatus.LATE });
-        setTodayLateReasonForStudent(subject, studentId, reason);
-        clearStudentNotification(today, subject, studentId);
-        
-        setLateNotificationSubjects(prev => prev.filter(s => s !== subject));
-        setIsReasonModalOpen(false);
-        alert('Motivo de tardanza enviado a la preceptora.');
-    };
-
-    const recentNotifications = [...mockAllNotifications]
-        .sort((a, b) => b.id - a.id)
-        .slice(0, 3);
-
-    const getInitialDay = () => {
-        const dayMap = ['Lunes', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Lunes'];
-        return dayMap[new Date().getDay()];
-    };
-
-    const [currentDay, setCurrentDay] = useState(getInitialDay());
-    const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-
-    const activeEvent = useMemo(() => {
-        const activeEvents = mockEvents
-            .filter(e => e.status === EventStatus.ACTIVE)
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        
-        return activeEvents.length > 0 ? activeEvents[0] : null;
-    }, []);
-
-    const handleDayChange = (direction: 'prev' | 'next') => {
-        const currentIndex = daysOfWeek.indexOf(currentDay);
-        if (direction === 'prev') {
-            const newIndex = (currentIndex - 1 + daysOfWeek.length) % daysOfWeek.length;
-            setCurrentDay(daysOfWeek[newIndex]);
-        } else {
-            const newIndex = (currentIndex + 1) % daysOfWeek.length;
-            setCurrentDay(daysOfWeek[newIndex]);
+    const getStatusStyles = (status: string) => {
+        switch (status) {
+            case 'P': return 'bg-green-100 text-green-800 border-green-200';
+            case 'A': return 'bg-red-100 text-red-800 border-red-200';
+            case 'J': return 'bg-amber-100 text-amber-800 border-amber-200';
+            default: return 'bg-slate-100 text-slate-500 border-slate-200';
         }
     };
-    
-    const displayDate = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-    const scheduleForSelectedDay = mockStudentWeeklySchedule[currentDay] || [];
 
-    const subjectColors: { [key: string]: { bg: string; accent: string } } = {
-        'Análisis Matemático': { bg: 'bg-indigo-50', accent: 'bg-indigo-500' },
-        'Diseño Web': { bg: 'bg-purple-50', accent: 'bg-purple-500' },
-        'Álgebra Lineal': { bg: 'bg-green-50', accent: 'bg-green-500' },
-        'Programación I': { bg: 'bg-red-50', accent: 'bg-red-500' },
-        'Inglés Técnico I': { bg: 'bg-yellow-50', accent: 'bg-yellow-500' },
-        'Bases de Datos': { bg: 'bg-pink-50', accent: 'bg-pink-500' },
-        'Sistemas Operativos': { bg: 'bg-orange-50', accent: 'bg-orange-500' },
-        'Redes de Computadoras': { bg: 'bg-teal-50', accent: 'bg-teal-500' },
-        'Ética y Deontología Profesional': { bg: 'bg-gray-50', accent: 'bg-gray-400' },
-        'default': { bg: 'bg-slate-100', accent: 'bg-slate-400' }
-    };
-
-    const attendanceStatusColors: { [key: string]: string } = {
-        'P': 'bg-green-100 border-green-300 text-green-800',
-        'A': 'bg-red-100 border-red-300 text-red-800',
-        'J': 'bg-amber-100 border-amber-300 text-amber-800',
-    };
+    const activeEvents = mockEvents.filter(e => e.status === EventStatus.ACTIVE);
+    const todayDayStr = today.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     return (
         <>
         <div className="space-y-6">
-            {/* Welcome Header */}
             <div>
-                 <h1 className="text-2xl font-bold text-indigo-700">
-                    Bienvenido, {mockStudentUser.name}
-                </h1>
-                <p className="text-slate-500 capitalize">{displayDate}</p>
+                <h1 className="text-2xl font-bold text-slate-800">Bienvenido, {mockStudentUser.name.split(' ')[0]}</h1>
+                <p className="text-slate-500 capitalize">{todayDayStr}</p>
             </div>
-            
-            {/* Late Notification */}
-            {lateNotificationSubjects.length > 0 && (
-                <LateNotificationBanner onNotify={() => setIsReasonModalOpen(true)} />
-            )}
-            
-            {/* Mobile-only Event Banner */}
-            {activeEvent && (
-                <div className="lg:hidden">
-                    <ActiveEventBanner event={activeEvent} />
-                </div>
-            )}
 
+            {/* Absence Notifications */}
+            {notifiedAbsences.length > 0 && (
+                 <div className="bg-red-50 p-4 rounded-lg border border-red-200 space-y-3">
+                    <div className="flex items-start space-x-3">
+                         <ExclamationCircleIconOutline className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <h3 className="font-bold text-red-800">Registro de Inasistencia</h3>
+                            <p className="text-sm text-red-700 mt-1">Se ha registrado tu ausencia en las siguientes materias de hoy. Si fue un error, contacta a tu preceptor/a.</p>
+                        </div>
+                    </div>
+                    <ul className="space-y-2 pl-9">
+                        {notifiedAbsences.map(subject => (
+                            <li key={subject} className="flex items-center justify-between">
+                                <span className="font-semibold text-sm text-red-900">{subject}</span>
+                                <button onClick={() => handleClearNotification(subject)} className="text-xs font-semibold text-red-600 hover:underline">Marcar como visto</button>
+                            </li>
+                        ))}
+                    </ul>
+                 </div>
+            )}
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column */}
                 <div className="space-y-6">
-                    {/* Horario del dia Card */}
-                    <div className="bg-white p-5 rounded-xl shadow-sm">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="font-semibold text-slate-700">Horario del dia</h2>
-                            <div className="flex items-center space-x-4">
-                                <button onClick={() => handleDayChange('prev')} className="p-1 rounded-full hover:bg-slate-100" aria-label="Día anterior">
-                                    <ChevronLeftIcon className="w-5 h-5 text-slate-500" />
-                                </button>
-                                <span className="font-semibold text-sm w-20 text-center">{currentDay}</span>
-                                <button onClick={() => handleDayChange('next')} className="p-1 rounded-full hover:bg-slate-100" aria-label="Día siguiente">
-                                    <ChevronRightIcon className="w-5 h-5 text-slate-500" />
-                                </button>
+                    {/* Schedule & Attendance Card */}
+                    <div className="bg-white p-4 rounded-lg shadow-sm flex flex-col h-full">
+                        <h2 className="text-lg font-semibold mb-3">Tu horario de hoy</h2>
+                        {todaySchedule.length > 0 ? (
+                            <div className="space-y-3">
+                                {todaySchedule.map(item => (
+                                    <div key={item.id} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-md">
+                                        <div className="w-1.5 h-10 bg-indigo-600 rounded-full"></div>
+                                        <div>
+                                            <p className="font-semibold">{item.subject}</p>
+                                            <p className="text-sm text-slate-500">{item.time}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex-grow flex items-center justify-center text-center text-slate-500 py-6">
+                                <p>No tienes clases programadas para hoy.</p>
+                            </div>
+                        )}
+                         <div className="mt-4">
+                            <button 
+                                onClick={() => setIsReasonModalOpen(true)}
+                                className="flex items-center justify-center w-full bg-amber-400 text-amber-900 font-bold py-3 rounded-lg hover:bg-amber-500 transition-colors"
+                            >
+                                <span>Avisar llegada tarde</span>
+                                <ChevronRightIcon className="w-5 h-5 ml-2" />
+                            </button>
+                        </div>
+                        
+                        <hr className="my-6 border-slate-100"/>
+                        
+                        <h2 className="text-lg font-semibold mb-4">Asistencia de la semana</h2>
+                        <div className="p-4 bg-slate-50 rounded-lg">
+                            <div className="flex justify-around items-center text-center">
+                                {attendanceData.map(({ day, status }) => (
+                                    <div key={day} className="flex flex-col items-center space-y-2">
+                                        <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center font-bold text-lg ${getStatusStyles(status)}`}>
+                                            {status}
+                                        </div>
+                                        <span className="text-sm font-medium text-slate-600">{day}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                        <div className="space-y-3">
-                            {scheduleForSelectedDay.length > 0 ? (
-                                scheduleForSelectedDay.map(item => {
-                                    const colors = subjectColors[item.subject] || subjectColors['default'];
-                                    const subjectData = mockStudentSubjects.find(s => s.name === item.subject);
-                                    return (
-                                         <Link 
-                                            key={item.id} 
-                                            to={subjectData ? `/materia-detalle/${subjectData.id}` : '#'}
-                                            className={`flex items-center space-x-3 p-3 ${colors.bg} rounded-lg hover:shadow-md hover:scale-[1.02] transition-all`}
-                                         >
-                                            <div className={`w-1.5 h-10 ${colors.accent} rounded-full`}></div>
-                                            <div>
-                                                <p className="font-semibold text-sm text-slate-800">{item.subject}</p>
-                                                <p className="text-xs text-slate-500">{item.time}</p>
-                                            </div>
-                                        </Link>
-                                    );
-                                })
-                            ) : (
-                                <div className="text-center py-6 text-slate-500 bg-slate-50 rounded-lg">
-                                    <p>No hay clases programadas para este día.</p>
-                                </div>
-                            )}
+                        <div className="mt-4 text-right">
+                            <Link to="/asistencia-registro" className="text-sm font-medium text-indigo-600 hover:underline">
+                                Ver registro completo
+                            </Link>
                         </div>
-                    </div>
-                    {/* Asistencia Card */}
-                    <div className="bg-white p-5 rounded-xl shadow-sm">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="font-semibold text-slate-800">Asistencia de la semana</h2>
-                        </div>
-                        <div className="bg-slate-100 p-4 rounded-lg flex justify-around">
-                            {mockWeeklyAttendance.map(item => {
-                                const colorClass = attendanceStatusColors[item.status] || 'bg-slate-200 border-slate-300 text-slate-500';
-                                return (
-                                    <div key={item.day} className="flex flex-col items-center space-y-2">
-                                       <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border shadow-sm ${colorClass}`}>
-                                           {item.status}
-                                       </div>
-                                       <p className="text-xs text-slate-500 font-medium">{item.day}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
+
                     </div>
                 </div>
 
                 {/* Right Column */}
                 <div className="space-y-6">
-                    {/* Desktop-only Event Banner */}
-                    {activeEvent && (
-                        <div className="hidden lg:block">
-                            <ActiveEventBanner event={activeEvent} />
-                        </div>
-                    )}
-                     {/* Notificaciones recientes Card */}
-                    <div className="bg-white p-5 rounded-xl shadow-sm">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="font-semibold text-slate-800">Notificaciones recientes</h2>
-                            <Link to="/notificaciones" className="text-sm font-medium text-indigo-600 hover:underline">
-                                Ver todas
-                            </Link>
-                        </div>
-                        <div className="bg-slate-100 p-4 rounded-lg">
-                            {recentNotifications.map((notif, index) => (
-                                 <div key={notif.id}>
-                                    {index > 0 && <hr className="my-3 border-slate-200" />}
-                                    <div className="flex items-center space-x-4">
-                                        <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0 flex items-center justify-center">
-                                            <NotificationIcon type={notif.type} />
-                                        </div>
+                    {/* Foro de Consultas Card */}
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                        <h2 className="text-lg font-semibold mb-3">Foro de Consultas</h2>
+                        <div className="space-y-3">
+                            {mockStudentSubjects.filter(s => s.status === 'cursando').slice(0, 4).map(subject => (
+                                <Link
+                                    key={subject.id}
+                                    to={`/materias/${subject.id}/foro`}
+                                    className="flex items-center justify-between p-3 bg-slate-50 rounded-md hover:bg-slate-100 transition-colors"
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        <ChatBubbleLeftRightIcon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
                                         <div>
-                                            <p className="font-semibold text-sm text-slate-800">{notif.title}</p>
-                                            <p className="text-xs text-slate-500">{notif.time}</p>
-                                         </div>
+                                            <p className="font-semibold text-sm">{subject.name}</p>
+                                        </div>
                                     </div>
-                                </div>
+                                    <span className="text-sm font-medium text-indigo-600">Ir al foro</span>
+                                </Link>
                             ))}
                         </div>
                     </div>
-
-                    {/* Shortcuts Card */}
-                    <div className="bg-white p-5 rounded-xl shadow-sm">
-                        <h2 className="text-lg font-semibold text-slate-800 mb-4">Atajos</h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                            {/* FIX: Destructured the shortcut object to avoid spreading the `key` property. The `key` prop is reserved by React and should not be passed down to child components. */}
-                            {shortcuts.map(({ key, to, text, icon }) => (
-                                <ShortcutButton key={key} to={to} text={text} icon={icon} />
-                            ))}
-                            <button 
-                                onClick={() => setShortcutsModalOpen(true)}
-                                className="flex flex-col items-center justify-center p-4 bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-200 hover:border-slate-400 transition-colors"
-                            >
-                                {shortcuts.length > 0 ? (
-                                    <>
-                                        <PencilIcon className="w-8 h-8 text-slate-400 mb-2" />
-                                        <span className="text-sm font-semibold text-slate-500 text-center">Editar atajos</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <PlusIcon className="w-8 h-8 text-slate-400 mb-2" />
-                                        <span className="text-sm font-semibold text-slate-500 text-center">Agregar atajo</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-
                 </div>
             </div>
+
+            {/* Shortcuts Section */}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+                <h2 className="text-lg font-semibold mb-3">Atajos</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {shortcutButtons.map(shortcut => <ShortcutButton key={shortcut.key} to={shortcut.to} text={shortcut.text} icon={shortcut.icon} />)}
+                    <button 
+                        onClick={() => setIsShortcutModalOpen(true)}
+                        className="flex flex-col items-center justify-center p-4 bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-200 hover:border-slate-400 transition-colors"
+                    >
+                        {shortcutButtons.length > 0 ? (
+                            <>
+                                <PencilIcon className="w-8 h-8 text-slate-400 mb-2" />
+                                <span className="text-sm font-semibold text-slate-500 text-center">Editar</span>
+                            </>
+                        ) : (
+                            <>
+                                <PlusIcon className="w-8 h-8 text-slate-400 mb-2" />
+                                <span className="text-sm font-semibold text-slate-500 text-center">Agregar</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+
         </div>
-         <ManageShortcutsModal
-            isOpen={isShortcutsModalOpen}
-            onClose={() => setShortcutsModalOpen(false)}
-            onSave={handleSaveShortcuts}
-            currentShortcutKeys={shortcuts.map(s => s.key)}
-        />
         <ReasonModal
             isOpen={isReasonModalOpen}
             onClose={() => setIsReasonModalOpen(false)}
-            onSave={handleSaveReason}
-            subjects={lateNotificationSubjects}
+            onSave={handleSaveLateReason}
+            subjects={todaySchedule.map(s => s.subject)}
+        />
+        <ManageShortcutsModal
+            isOpen={isShortcutModalOpen}
+            onClose={() => setIsShortcutModalOpen(false)}
+            onSave={handleSaveShortcuts}
+            currentShortcutKeys={shortcutKeys}
         />
         </>
     );
