@@ -1,9 +1,7 @@
-
-
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCalendarEvents, setCalendarEvents } from '../store';
-import { CalendarEvent, ClassStatus, CalendarEventType } from '../types';
+import { CalendarEvent, ClassStatus, CalendarEventType, UserRole } from '../types';
 import { 
     ChevronLeftIcon, ChevronRightIcon, PlusIcon, InformationCircleIcon,
     TrashIcon, ChevronDownIcon, ChevronUpIcon, XMarkIcon, EllipsisVerticalIcon,
@@ -54,8 +52,11 @@ const addableEventTypes: { [key in CalendarEventType.HOLIDAY | CalendarEventType
     [CalendarEventType.INSTITUTIONAL]: 'Suspensión de Clases',
 };
 
+interface SchoolCalendarScreenProps {
+    userRole: UserRole;
+}
 
-const SchoolCalendarScreen: React.FC = () => {
+const SchoolCalendarScreen: React.FC<SchoolCalendarScreenProps> = ({ userRole }) => {
     const initialDate = new Date(2025, 9, 8); // October 8, 2025
     const [currentDate, setCurrentDate] = React.useState(initialDate);
     const [selectedDate, setSelectedDate] = React.useState(initialDate);
@@ -456,14 +457,18 @@ const SchoolCalendarScreen: React.FC = () => {
             <div className="divide-y divide-slate-100">
                 {isClass && (
                     <>
-                        <button onClick={() => handleAction(handleTakeAttendance)} disabled={event.attendanceTaken || isCanceled} className={`${itemClassName} hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed`}><CheckBadgeIcon className="w-5 h-5"/><span>Tomar asistencia</span></button>
+                        {userRole === 'preceptor' && (
+                            <button onClick={() => handleAction(handleTakeAttendance)} disabled={event.attendanceTaken || isCanceled} className={`${itemClassName} hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed`}>
+                                <CheckBadgeIcon className="w-5 h-5"/><span>Tomar asistencia</span>
+                            </button>
+                        )}
                         {isSwapped ? (<button onClick={() => handleAction(handleRevertSwap)} className={`${itemClassName} hover:bg-slate-50`}><ArrowUturnLeftIcon className="w-5 h-5"/><span>Revertir Intercambio</span></button>)
                          : (<button onClick={() => handleAction(handleStartSwap)} disabled={isCanceled} className={`${itemClassName} hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed`}><ArrowsRightLeftIcon className="w-5 h-5"/><span>Intercambiar clase</span></button>)}
                         {isCanceled ? (<button onClick={() => handleAction(handleUncancelClass)} className={`${itemClassName} text-green-600 hover:bg-green-50`}><ArrowUturnLeftIcon className="w-5 h-5"/><span>Descancelar clase</span></button>)
                          : (<button onClick={() => handleAction(handleCancelClass)} className={`${itemClassName} text-amber-600 hover:bg-amber-50`}><XMarkIcon className="w-5 h-5"/><span>Cancelar clase</span></button>)}
                     </>
                 )}
-                {!isClass && (<button onClick={() => handleAction(handleDeleteEvent)} className={`${itemClassName} text-red-600 hover:bg-red-50`}><TrashIcon className="w-5 h-5"/><span>Eliminar Evento</span></button>)}
+                {!isClass && userRole === 'preceptor' && (<button onClick={() => handleAction(handleDeleteEvent)} className={`${itemClassName} text-red-600 hover:bg-red-50`}><TrashIcon className="w-5 h-5"/><span>Eliminar Evento</span></button>)}
             </div>
         );
     };
@@ -576,10 +581,12 @@ const SchoolCalendarScreen: React.FC = () => {
                         <h3 className="font-semibold text-slate-700 mb-3">Eventos del día</h3>
                         <div className="space-y-2 max-h-48 overflow-y-auto pr-2">{nonClassEventsForSelectedDay.length > 0 ? nonClassEventsForSelectedDay.map(event => (<div key={event.id} className="bg-slate-100 p-3 rounded-lg text-center"><p className="font-semibold text-slate-700">{event.title}</p>{event.description && <p className="text-sm text-slate-500">{event.description}</p>}</div>)) : <p className="text-sm text-center text-slate-500 py-4">No hay eventos para este día.</p>}</div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => setAddEventModalOpen(true)} className="w-full flex items-center justify-center space-x-2 bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-800 transition-colors text-sm"><PlusIcon className="w-4 h-4" /><span>Agregar Evento</span></button>
-                        <button onClick={() => setIsConfigModalOpen(true)} className="w-full flex items-center justify-center space-x-2 bg-slate-200 text-slate-800 font-bold py-3 px-4 rounded-lg hover:bg-slate-300 transition-colors text-sm"><CalendarDaysIcon className="w-4 h-4" /><span>Ciclo Lectivo</span></button>
-                    </div>
+                    {userRole === 'preceptor' && (
+                        <div className="grid grid-cols-2 gap-2">
+                            <button onClick={() => setAddEventModalOpen(true)} className="w-full flex items-center justify-center space-x-2 bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-800 transition-colors text-sm"><PlusIcon className="w-4 h-4" /><span>Agregar Evento</span></button>
+                            <button onClick={() => setIsConfigModalOpen(true)} className="w-full flex items-center justify-center space-x-2 bg-slate-200 text-slate-800 font-bold py-3 px-4 rounded-lg hover:bg-slate-300 transition-colors text-sm"><CalendarDaysIcon className="w-4 h-4" /><span>Ciclo Lectivo</span></button>
+                        </div>
+                    )}
                 </div>
                 <div className="lg:col-span-2">
                      <div className="bg-white p-6 rounded-lg shadow-sm h-full">
@@ -683,7 +690,12 @@ const SchoolCalendarScreen: React.FC = () => {
                         </div>
                     </div>
                 )}
-                <div className="fixed bottom-24 right-6 flex flex-col space-y-3"><button onClick={() => setIsConfigModalOpen(true)} className="bg-slate-800 text-white p-4 rounded-full shadow-lg hover:bg-slate-900"><CalendarDaysIcon className="w-6 h-6"/></button><button onClick={() => setAddEventModalOpen(true)} className="bg-indigo-700 text-white p-4 rounded-full shadow-lg hover:bg-indigo-800"><PlusIcon className="w-6 h-6" /></button></div>
+                {userRole === 'preceptor' && (
+                    <div className="fixed bottom-24 right-6 flex flex-col space-y-3">
+                        <button onClick={() => setIsConfigModalOpen(true)} className="bg-slate-800 text-white p-4 rounded-full shadow-lg hover:bg-slate-900"><CalendarDaysIcon className="w-6 h-6"/></button>
+                        <button onClick={() => setAddEventModalOpen(true)} className="bg-indigo-700 text-white p-4 rounded-full shadow-lg hover:bg-indigo-800"><PlusIcon className="w-6 h-6" /></button>
+                    </div>
+                )}
             </div>
             <AddEventModal isOpen={isAddEventModalOpen} onClose={() => setAddEventModalOpen(false)} onAddEvent={handleAddEvent} selectedDate={selectedDate} />
             <ConfigModal isOpen={isConfigModalOpen} onClose={() => setIsConfigModalOpen(false)} />

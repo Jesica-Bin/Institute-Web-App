@@ -1,12 +1,27 @@
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockTeacherSubjectDetails } from '../../data';
-import { DocumentTextIcon, UsersIcon, BookOpenIcon } from '../../components/Icons';
+import { DocumentTextIcon, UsersIcon, BookOpenIcon, ClipboardDocumentListIcon, ChevronDownIcon, ChevronUpIcon } from '../../components/Icons';
+import { getClassLogs, getCalendarEvents } from '../../store';
 
 const TeacherSubjectDetailScreen: React.FC = () => {
     const { subjectId } = useParams<{ subjectId: string }>();
     const navigate = useNavigate();
     const subject = subjectId ? mockTeacherSubjectDetails[subjectId] : null;
+    const [expandedLogId, setExpandedLogId] = React.useState<string | null>(null);
+
+    const subjectLogs = React.useMemo(() => {
+        if (!subject) return [];
+        const allLogs = getClassLogs();
+        const allEvents = getCalendarEvents();
+    
+        return allLogs
+            .filter(log => {
+                const event = allEvents.find(e => e.id === log.eventId);
+                return event?.title === subject?.name;
+            })
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [subject?.name]);
 
     if (!subject) {
         return <div className="text-center p-8 bg-white rounded-lg shadow-sm">No se encontró la materia.</div>;
@@ -45,6 +60,47 @@ const TeacherSubjectDetailScreen: React.FC = () => {
                     >
                         Cargar Notas de Evaluaciones
                     </button>
+                </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+                <h2 className="text-lg font-semibold border-b border-slate-200 pb-3 mb-4 flex items-center space-x-2">
+                    <ClipboardDocumentListIcon className="w-5 h-5 text-indigo-700" />
+                    <span>Historial del Libro de Temas</span>
+                </h2>
+                <div className="space-y-2">
+                    {subjectLogs.length > 0 ? (
+                        subjectLogs.map(log => (
+                            <div key={log.id} className="border border-slate-200 rounded-lg">
+                                <button
+                                    onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
+                                    className="w-full flex justify-between items-center p-3 text-left hover:bg-slate-50"
+                                >
+                                    <div>
+                                        <p className="font-semibold">{new Date(log.date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                                        <p className="text-sm text-slate-600 truncate">{log.topic}</p>
+                                    </div>
+                                    {expandedLogId === log.id ? <ChevronUpIcon className="w-5 h-5 text-slate-500" /> : <ChevronDownIcon className="w-5 h-5 text-slate-500" />}
+                                </button>
+                                {expandedLogId === log.id && (
+                                    <div className="px-4 pb-4 border-t border-slate-200">
+                                        <div className="mt-3">
+                                            <h4 className="text-sm font-semibold text-slate-800">Actividades:</h4>
+                                            <p className="text-sm text-slate-600 whitespace-pre-wrap">{log.activities}</p>
+                                        </div>
+                                        {log.observations && (
+                                             <div className="mt-3">
+                                                <h4 className="text-sm font-semibold text-slate-800">Observaciones:</h4>
+                                                <p className="text-sm text-slate-600 whitespace-pre-wrap">{log.observations}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-center text-sm text-slate-500 py-4">No hay entradas en el libro de temas para esta materia.</p>
+                    )}
                 </div>
             </div>
 

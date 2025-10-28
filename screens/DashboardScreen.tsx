@@ -1,4 +1,5 @@
 
+
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { mockUser, mockAgenda, mockAllNotifications } from '../data';
@@ -112,7 +113,7 @@ interface ShortcutButtonProps {
   icon: React.ElementType;
 }
 const ShortcutButton: React.FC<ShortcutButtonProps> = ({ to, text, icon: Icon }) => (
-    <Link to={to} className="flex flex-col items-center justify-center p-4 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+    <Link to={to} className="h-full flex flex-col items-center justify-center p-4 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
         <Icon className="w-8 h-8 text-indigo-700 mb-2" />
         <span className="text-sm font-semibold text-slate-800 text-center">{text}</span>
     </Link>
@@ -157,94 +158,87 @@ const DashboardScreen: React.FC = () => {
                 <h1 className="text-2xl font-bold text-slate-800">Bienvenida, {mockUser.name.split(' ')[0]}</h1>
                 <p className="text-slate-500 capitalize">{today}</p>
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column */}
-                <div className="space-y-6">
-                    {/* Agenda Card */}
-                    <div className="bg-white p-4 rounded-lg shadow-sm flex flex-col h-full">
-                        <div className="flex justify-between items-center mb-3">
-                            <h2 className="text-lg font-semibold">Agenda de hoy</h2>
-                            <Link 
-                                to="/calendario" 
-                                className="text-sm font-medium text-indigo-600 hover:underline"
-                            >
-                                Ir a calendario
-                            </Link>
-                        </div>
-                        <div className="space-y-3 flex-grow">
-                            {mockAgenda.slice(0, 5).map(item => (
-                                <div key={item.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-md">
-                                    <div className="flex items-center space-x-3">
-                                        <div className="w-1.5 h-10 bg-indigo-600 rounded-full"></div>
-                                        <div>
-                                            <p className="font-semibold">{item.subject}</p>
-                                            <p className="text-sm text-slate-500">{item.course}</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-sm font-medium text-slate-600">{item.time}</p>
+            
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                    <h2 className="text-lg font-semibold">Agenda de hoy</h2>
+                    <Link 
+                        to="/calendario" 
+                        className="text-sm font-medium text-indigo-600 hover:underline"
+                    >
+                        Ir a calendario
+                    </Link>
+                </div>
+                <div className="space-y-3">
+                    {mockAgenda.slice(0, 5).map(item => (
+                        <div key={item.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-md">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-1.5 h-10 bg-indigo-600 rounded-full"></div>
+                                <div>
+                                    <p className="font-semibold">{item.subject}</p>
+                                    <p className="text-sm text-slate-500">{item.course}</p>
                                 </div>
-                            ))}
+                            </div>
+                            <p className="text-sm font-medium text-slate-600">{item.time}</p>
                         </div>
-                        <div className="mt-4">
-                            <Link to="/tomar-asistencia" className="flex items-center justify-center w-full bg-indigo-700 text-white font-bold py-3 rounded-lg hover:bg-indigo-800 transition-colors">
-                                <span>Ir a tomar asistencia</span>
-                                <ChevronRightIcon className="w-5 h-5 ml-2" />
-                            </Link>
+                    ))}
+                </div>
+                <div className="mt-4">
+                    <Link to="/tomar-asistencia" className="flex items-center justify-center w-full bg-indigo-700 text-white font-bold py-3 rounded-lg hover:bg-indigo-800 transition-colors">
+                        <span>Ir a tomar asistencia</span>
+                        <ChevronRightIcon className="w-5 h-5 ml-2" />
+                    </Link>
+                </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+                <h2 className="text-lg font-semibold mb-3">Atajos</h2>
+                <div className="flex space-x-4 overflow-x-auto pb-2">
+                    {shortcuts.map((shortcut) => (
+                        <div key={shortcut.key} className="flex-shrink-0 w-28">
+                            <ShortcutButton to={shortcut.to} text={shortcut.text} icon={shortcut.icon} />
                         </div>
+                    ))}
+                    <div className="flex-shrink-0 w-28">
+                        <button 
+                            onClick={() => setIsModalOpen(true)}
+                            className="w-full h-full flex flex-col items-center justify-center p-4 bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-200 hover:border-slate-400 transition-colors"
+                        >
+                            {shortcuts.length > 0 ? (
+                                <>
+                                    <PencilIcon className="w-8 h-8 text-slate-400 mb-2" />
+                                    <span className="text-sm font-semibold text-slate-500 text-center">Editar atajos</span>
+                                </>
+                            ) : (
+                                <>
+                                    <PlusIcon className="w-8 h-8 text-slate-400 mb-2" />
+                                    <span className="text-sm font-semibold text-slate-500 text-center">Agregar atajo</span>
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
-
-                {/* Right Column */}
-                <div className="space-y-6">
-                    {/* Notifications Card */}
-                    <div className="bg-white p-4 rounded-lg shadow-sm">
-                        <div className="flex justify-between items-center mb-3">
-                            <h2 className="text-lg font-semibold">Notificaciones recientes</h2>
-                            <Link to="/notificaciones" className="text-sm font-medium text-indigo-600 hover:underline">
-                                Ver todas
-                            </Link>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                    <h2 className="text-lg font-semibold">Notificaciones recientes</h2>
+                    <Link to="/notificaciones" className="text-sm font-medium text-indigo-600 hover:underline">
+                        Ver todas
+                    </Link>
+                </div>
+                <div className="space-y-3">
+                    {recentNotifications.map(notif => (
+                         <div key={notif.id} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-md">
+                            <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0 flex items-center justify-center">
+                                <NotificationIcon type={notif.type} />
+                            </div>
+                            <div>
+                                <p className="font-semibold text-sm">{notif.title}</p>
+                                <p className="text-xs text-slate-500">{notif.time}</p>
+                            </div>
                         </div>
-                        <div className="space-y-3">
-                            {recentNotifications.map(notif => (
-                                 <div key={notif.id} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-md">
-                                    <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0 flex items-center justify-center">
-                                        <NotificationIcon type={notif.type} />
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-sm">{notif.title}</p>
-                                        <p className="text-xs text-slate-500">{notif.time}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                     {/* Shortcuts Card */}
-                    <div className="bg-white p-4 rounded-lg shadow-sm">
-                        <h2 className="text-lg font-semibold mb-3">Atajos</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {shortcuts.map((shortcut) => (
-                                <ShortcutButton key={shortcut.key} to={shortcut.to} text={shortcut.text} icon={shortcut.icon} />
-                            ))}
-                            <button 
-                                onClick={() => setIsModalOpen(true)}
-                                className="flex flex-col items-center justify-center p-4 bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-200 hover:border-slate-400 transition-colors"
-                            >
-                                {shortcuts.length > 0 ? (
-                                    <>
-                                        <PencilIcon className="w-8 h-8 text-slate-400 mb-2" />
-                                        <span className="text-sm font-semibold text-slate-500 text-center">Editar atajos</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <PlusIcon className="w-8 h-8 text-slate-400 mb-2" />
-                                        <span className="text-sm font-semibold text-slate-500 text-center">Agregar atajo</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
+                    ))}
                 </div>
             </div>
         </div>

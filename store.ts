@@ -1,5 +1,5 @@
-import { AttendanceStatus, CalendarEvent, CalendarEventType, ClassStatus, SubjectDetail, Notification, StudentRequest, RequestStatus } from './types';
-import { mockCalendarEvents, mockUser, mockStudentUser, mockOfficialCommunications, mockRequests, mockSystemNotifications } from './data';
+import { AttendanceStatus, CalendarEvent, CalendarEventType, ClassStatus, SubjectDetail, Notification, StudentRequest, RequestStatus, ClassLog } from './types';
+import { mockCalendarEvents, mockUser, mockStudentUser, mockOfficialCommunications, mockRequests, mockSystemNotifications, mockClassLogs } from './data';
 
 // --- Centralized In-Memory Store ---
 const _store = {
@@ -7,6 +7,7 @@ const _store = {
   officialCommunications: [...mockOfficialCommunications],
   requests: [...mockRequests],
   calendarEvents: [...mockCalendarEvents],
+  classLogs: [...mockClassLogs],
 };
 
 // Structure: { "YYYY-MM-DD": { "Subject Name": { studentId: status } } }
@@ -338,4 +339,37 @@ export const getCalendarEvents = (): CalendarEvent[] => {
 };
 export const setCalendarEvents = (events: CalendarEvent[]) => {
     _store.calendarEvents = events;
+};
+
+// Added function to update a single event
+export const updateCalendarEvent = (updatedEvent: CalendarEvent) => {
+    const eventIndex = _store.calendarEvents.findIndex(e => e.id === updatedEvent.id);
+    if (eventIndex > -1) {
+        _store.calendarEvents[eventIndex] = updatedEvent;
+    }
+    // To trigger re-renders in components that use getCalendarEvents
+    _store.calendarEvents = [..._store.calendarEvents]; 
+};
+
+// --- Class Log Management ---
+export const getClassLogs = (): ClassLog[] => {
+    return _store.classLogs;
+};
+
+export const getClassLogForEvent = (eventId: string, date: string): ClassLog | undefined => {
+    const logId = `${eventId}-${date}`;
+    return _store.classLogs.find(log => log.id === logId);
+};
+
+export const addOrUpdateClassLog = (log: Omit<ClassLog, 'id'>) => {
+    const logId = `${log.eventId}-${log.date}`;
+    const existingIndex = _store.classLogs.findIndex(l => l.id === logId);
+    
+    const newLogEntry: ClassLog = { ...log, id: logId };
+    
+    if (existingIndex > -1) {
+        _store.classLogs[existingIndex] = newLogEntry;
+    } else {
+        _store.classLogs.push(newLogEntry);
+    }
 };

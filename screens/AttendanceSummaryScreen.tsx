@@ -1,5 +1,3 @@
-
-
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mockYears, mockStudents, mockCareers, courseData } from '../data';
@@ -253,9 +251,15 @@ const AttendanceSummaryScreen: React.FC = () => {
         setSelectedSubject(e.target.value);
     };
 
+    const isSelectionMissing = !selectedYear || !selectedSubject;
+
     const handleTakeAttendance = () => {
+        if (isSelectionMissing) {
+            alert('Por favor, seleccione un año y una materia para tomar asistencia.');
+            return;
+        }
         const career = mockCareers[currentCareerIndex];
-        navigate('/tomar-asistencia', { state: { career } });
+        navigate('/tomar-asistencia', { state: { career, year: selectedYear, subject: selectedSubject } });
     };
 
     const handleResolveLateStatus = (studentId: number, status: 'present' | 'absent') => {
@@ -275,7 +279,6 @@ const AttendanceSummaryScreen: React.FC = () => {
         }));
     };
 
-    const isSelectionMissing = !selectedYear || !selectedSubject;
     const noDataForSelection = !isSelectionMissing && (attendanceStats.present + attendanceStats.absent + attendanceStats.late + attendanceStats.justified === 0);
     const chartClassName = "w-[140px] h-[140px] lg:w-[220px] lg:h-[220px]";
 
@@ -349,7 +352,8 @@ const AttendanceSummaryScreen: React.FC = () => {
                 <div className="pt-6 border-t border-slate-100 space-y-6">
                     <button
                         onClick={handleTakeAttendance}
-                        className="w-full flex items-center justify-between px-6 py-4 bg-amber-400 text-amber-900 font-bold rounded-lg hover:bg-amber-500 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                        disabled={isSelectionMissing}
+                        className="w-full flex items-center justify-between px-6 py-4 bg-amber-400 text-amber-900 font-bold rounded-lg hover:bg-amber-500 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-500"
                     >
                         <span>Tomar Asistencia</span>
                         <ChevronRightIcon className="w-5 h-5" />

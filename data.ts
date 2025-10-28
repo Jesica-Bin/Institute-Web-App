@@ -35,6 +35,10 @@ import {
   AuditLog,
   ForumThread,
   ForumPost,
+  Resource,
+  ResourceType,
+  Reservation,
+  ClassLog,
 } from './types';
 
 export const mockUser = {
@@ -295,5 +299,66 @@ export const mockCalendarEvents: CalendarEvent[] = [
     title: 'Inglés Técnico I', startTime: '20:00', endTime: '22:00',
     course: 'Tecnicatura Superior en Programación - 1º Año', professor: 'Mariana Rodriguez', classroom: 'Aula 3',
     status: ClassStatus.PENDING
+  },
+];
+
+// --- Teacher Class Logbook Data ---
+export const mockClassLogs: ClassLog[] = [
+    {
+        id: 'c6-2025-10-08',
+        eventId: 'c6',
+        date: '2025-10-08',
+        topic: 'Introducción a la Tipografía',
+        activities: 'Se realizó una presentación sobre los conceptos básicos de la tipografía y su historia. Los alumnos comenzaron a trabajar en el TP1.',
+        observations: 'La mayoría de los alumnos mostraron interés. Recordar traer materiales para la próxima clase.'
+    }
+];
+
+
+// --- Resource Reservation Data ---
+export const mockResources: Resource[] = [
+  { id: 'proj-1', name: 'Proyector Epson A (Móvil)', type: ResourceType.PROJECTOR },
+  { id: 'proj-2', name: 'Proyector BenQ B (Móvil)', type: ResourceType.PROJECTOR },
+  { id: 'proj-3', name: 'Proyector Aula 10 (Fijo)', type: ResourceType.PROJECTOR },
+  { id: 'lab-a', name: 'Sala de Computadoras A (20 PCs)', type: ResourceType.COMPUTER_LAB },
+  { id: 'lab-b', name: 'Sala de Computadoras B (15 PCs)', type: ResourceType.COMPUTER_LAB },
+];
+
+const getFutureDate = (dayOffset: number): string => {
+    const date = new Date();
+    date.setDate(date.getDate() + dayOffset);
+    return date.toISOString().split('T')[0];
+}
+
+export const mockReservations: Reservation[] = [
+  {
+    id: 'res-1',
+    resourceId: 'proj-1',
+    teacherId: 'DOC-015', // Ricardo Molina
+    teacherName: 'Ricardo Molina',
+    subject: 'Programación I',
+    date: getFutureDate(2),
+    startTime: '08:00',
+    endTime: '10:00',
+  },
+  {
+    id: 'res-2',
+    resourceId: 'lab-a',
+    teacherId: 'DOC-015', // Ricardo Molina
+    teacherName: 'Ricardo Molina',
+    subject: 'Programación I',
+    date: getFutureDate(4),
+    startTime: '10:00',
+    endTime: '12:00',
+  },
+  {
+    id: 'res-3',
+    resourceId: 'proj-1',
+    teacherId: 'DOC-016', // Other teacher
+    teacherName: 'Mariana Rodriguez',
+    subject: 'Inglés Técnico I',
+    date: getFutureDate(2), // Same day as res-1, different time
+    startTime: '14:00',
+    endTime: '16:00',
   },
 ];

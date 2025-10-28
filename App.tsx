@@ -3,6 +3,7 @@ import { Routes, Route, useLocation, useNavigate, Navigate, useMatch, Link, NavL
 import { mockSubjectDetails, mockCertificateRequests, mockTeacherSubjects } from './data';
 import { BellIcon, UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, HomeIcon, CheckBadgeIcon, UsersIcon, DocumentTextIcon, CalendarDaysIcon, BookOpenIcon, ChatBubbleLeftRightIcon, BriefcaseIcon, DocumentChartBarIcon, ShieldCheckIcon, MegaphoneIcon } from './components/Icons';
 import { hasUnreadNotifications } from './store';
+import { UserRole } from './types';
 
 // Layout Components
 import Header from './components/Header';
@@ -70,6 +71,7 @@ import TeacherSubjectsScreen from './screens/teacher/TeacherSubjectsScreen';
 import TeacherSubjectDetailScreen from './screens/teacher/TeacherSubjectDetailScreen';
 import ForumHubScreen from './screens/teacher/ForumHubScreen';
 import ManageGradesScreen from './screens/teacher/ManageGradesScreen';
+import ResourceReservationScreen from './screens/teacher/ResourceReservationScreen';
 
 // Director Screens
 import DirectorDashboardScreen from './screens/director/DirectorDashboardScreen';
@@ -197,9 +199,9 @@ const BottomNav: React.FC<BottomNavProps> = ({ userRole }) => {
 
 // --- END INLINED COMPONENTS ---
 
-type UserRole = 'preceptor' | 'student' | 'teacher' | 'director';
+type AppUserRole = 'preceptor' | 'student' | 'teacher' | 'director';
 interface User {
-    role: UserRole;
+    role: AppUserRole;
 }
 
 interface PreceptorAppProps {
@@ -227,6 +229,9 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
     }, [location.pathname]);
 
     const { career: dynamicTitle } = location.state || {};
+    
+    const topLevelPaths = ['/', '/asistencia', '/gestion-estudiantes', '/solicitudes', '/calendario'];
+    const isTopLevelScreen = topLevelPaths.includes(location.pathname);
     const isDashboard = location.pathname === '/';
 
     const screenTitles: { [key: string]: string } = {
@@ -252,7 +257,7 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
         '/cambiar-contrasena': 'Cambiar Contraseña',
     };
 
-    let title = isDashboard ? '' : (screenTitles[location.pathname] || 'Inicio');
+    let title = isTopLevelScreen ? '' : (screenTitles[location.pathname] || 'Inicio');
     if (location.pathname === '/tomar-asistencia' && dynamicTitle) {
         title = dynamicTitle;
     }
@@ -286,8 +291,7 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
     else if (matchAyuda) backPath = '/configuracion';
     else if (matchMisNotas) backPath = '/';
 
-
-    const showBackButton = !isDashboard;
+    const showBackButton = !isTopLevelScreen;
     
     return (
         <div className="min-h-screen font-sans antialiased text-slate-800 bg-slate-100">
@@ -303,28 +307,28 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
                 isCollapsed={isDrawerCollapsed}
                 setIsCollapsed={setIsDrawerCollapsed}
             />
-            <main className={`relative transition-all duration-300 ease-in-out ${isDrawerCollapsed ? 'lg:ml-20' : 'lg:ml-64'} lg:pt-8 pb-24 lg:pb-0`}>
-                {!isDesktop && (
+            <main className={`relative transition-all duration-300 ease-in-out ${isDrawerCollapsed ? 'lg:ml-20' : 'lg:ml-64'} pb-24 lg:pb-0`}>
+                {!isDesktop && !isTopLevelScreen && (
                     <Header 
                         title={title} 
                         onProfileClick={() => setProfilePopoverOpen(true)}
                         showBackButton={showBackButton}
-                        isDashboard={isDashboard}
+                        isDashboard={false}
                         backPath={backPath}
                     />
                 )}
-                {isDesktop && isDashboard && (
-                    <div className="absolute top-6 right-6 z-10 flex items-center space-x-2">
-                        <Link to="/notificaciones" className="relative p-2 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-colors">
-                            <BellIcon className="w-7 h-7" />
-                            {hasUnread && <span className="absolute top-2 right-2 block w-2.5 h-2.5 bg-red-500 rounded-full" />}
+                {isDashboard && (
+                    <div className="absolute top-4 right-4 z-30 flex items-center space-x-2">
+                        <Link to="/notificaciones" className="relative p-2 rounded-full text-slate-600 bg-white/80 backdrop-blur-sm shadow-md hover:bg-slate-200 transition-colors">
+                            <BellIcon className="w-6 h-6" />
+                            {hasUnread && <span className="absolute top-2 right-2 block w-2 h-2 bg-red-500 rounded-full" />}
                         </Link>
-                         <button onClick={() => setProfilePopoverOpen(true)} className="p-2 rounded-full text-slate-600 hover:bg-slate-200">
-                            <UserCircleIcon className="w-7 h-7" />
+                         <button onClick={() => setProfilePopoverOpen(true)} className="p-2 rounded-full text-slate-600 bg-white/80 backdrop-blur-sm shadow-md hover:bg-slate-200 transition-colors">
+                            <UserCircleIcon className="w-6 h-6" />
                         </button>
                     </div>
                 )}
-                <div className="max-w-7xl mx-auto p-4 md:p-6">
+                <div className={`max-w-7xl mx-auto p-4 md:p-6 ${!isDesktop ? (isTopLevelScreen ? 'pt-6' : 'pt-[85px]') : 'pt-8'}`}>
                     <Routes>
                         <Route path="/" element={<DashboardScreen />} />
                         <Route path="/asistencia" element={<AttendanceSummaryScreen />} />
@@ -333,7 +337,7 @@ const PreceptorApp: React.FC<PreceptorAppProps> = ({ onLogout, isDrawerCollapsed
                         <Route path="/reportes" element={<ReportsScreen />} />
                         <Route path="/solicitudes" element={<RequestsScreen />} />
                         <Route path="/solicitud-detalle" element={<RequestDetailScreen />} />
-                        <Route path="/calendario" element={<SchoolCalendarScreen />} />
+                        <Route path="/calendario" element={<SchoolCalendarScreen userRole="preceptor" />} />
                         <Route path="/gestion-eventos" element={<EventManagementScreen />} />
                         <Route path="/crear-evento" element={<CreateEventScreen />} />
                         <Route path="/evento-qr" element={<EventQRCodeScreen />} />
@@ -379,6 +383,8 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
         setHasUnread(hasUnreadNotifications());
     }, [location.pathname]);
 
+    const topLevelPaths = ['/', '/mis-materias', '/asistencia', '/calendario-escolar', '/certificados'];
+    const isTopLevelScreen = topLevelPaths.includes(location.pathname);
     const isDashboard = location.pathname === '/';
 
     // --- Define screen titles first to use their keys for matching ---
@@ -462,7 +468,7 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
     // --- Title Logic ---
     let title: string;
 
-    if (isDashboard) {
+    if (isTopLevelScreen) {
         title = '';
     } else if (matchMateriaDetalle?.params.subjectId) {
         const subject = mockSubjectDetails[matchMateriaDetalle.params.subjectId];
@@ -475,7 +481,7 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
         title = currentRoute ? screenTitles[currentRoute] : 'Inicio';
     }
 
-    const showBackButton = !isDashboard;
+    const showBackButton = !isTopLevelScreen;
 
     return (
         <div className="min-h-screen font-sans antialiased text-slate-800 bg-slate-100">
@@ -491,28 +497,28 @@ const StudentApp: React.FC<StudentAppProps> = ({ onLogout, isDrawerCollapsed, se
                 isCollapsed={isDrawerCollapsed}
                 setIsCollapsed={setIsDrawerCollapsed}
             />
-            <main className={`relative transition-all duration-300 ease-in-out ${isDrawerCollapsed ? 'lg:ml-20' : 'lg:ml-64'} lg:pt-8 pb-24 lg:pb-0`}>
-                {!isDesktop && (
+            <main className={`relative transition-all duration-300 ease-in-out ${isDrawerCollapsed ? 'lg:ml-20' : 'lg:ml-64'} pb-24 lg:pb-0`}>
+                {!isDesktop && !isTopLevelScreen && (
                     <Header 
                         title={title} 
                         onProfileClick={() => setProfilePopoverOpen(true)}
                         showBackButton={showBackButton}
-                        isDashboard={isDashboard}
+                        isDashboard={false}
                         backPath={backPath}
                     />
                 )}
-                 {isDesktop && isDashboard && (
-                    <div className="absolute top-6 right-6 z-10 flex items-center space-x-2">
-                        <Link to="/notificaciones" className="relative p-2 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-colors">
-                            <BellIcon className="w-7 h-7" />
-                            {hasUnread && <span className="absolute top-2 right-2 block w-2.5 h-2.5 bg-red-500 rounded-full" />}
+                 {isDashboard && (
+                    <div className="absolute top-4 right-4 z-30 flex items-center space-x-2">
+                        <Link to="/notificaciones" className="relative p-2 rounded-full text-slate-600 bg-white/80 backdrop-blur-sm shadow-md hover:bg-slate-200 transition-colors">
+                            <BellIcon className="w-6 h-6" />
+                            {hasUnread && <span className="absolute top-2 right-2 block w-2 h-2 bg-red-500 rounded-full" />}
                         </Link>
-                        <button onClick={() => setProfilePopoverOpen(true)} className="p-2 rounded-full text-slate-600 hover:bg-slate-200">
-                            <UserCircleIcon className="w-7 h-7" />
+                         <button onClick={() => setProfilePopoverOpen(true)} className="p-2 rounded-full text-slate-600 bg-white/80 backdrop-blur-sm shadow-md hover:bg-slate-200 transition-colors">
+                            <UserCircleIcon className="w-6 h-6" />
                         </button>
                     </div>
                 )}
-                <div className="max-w-7xl mx-auto p-4 md:p-6">
+                <div className={`max-w-7xl mx-auto p-4 md:p-6 ${!isDesktop ? (isTopLevelScreen ? 'pt-6' : 'pt-[85px]') : 'pt-8'}`}>
                     <Routes>
                         <Route path="/" element={<StudentDashboardScreen />} />
                         <Route path="/mis-materias" element={<MySubjectsScreen />} />
@@ -569,6 +575,8 @@ const TeacherApp: React.FC<TeacherAppProps> = ({ onLogout, isDrawerCollapsed, se
 
     React.useEffect(() => { setHasUnread(hasUnreadNotifications()); }, [location.pathname]);
 
+    const topLevelPaths = ['/', '/materias', '/reservas', '/foro', '/calendario'];
+    const isTopLevelScreen = topLevelPaths.includes(location.pathname);
     const isDashboard = location.pathname === '/';
     
     const screenTitles: { [key: string]: string } = {
@@ -589,7 +597,7 @@ const TeacherApp: React.FC<TeacherAppProps> = ({ onLogout, isDrawerCollapsed, se
     const matchForoSubject = useMatch('/foro/materias/:subjectId');
     const matchForoThread = useMatch('/foro/materias/:subjectId/thread/:threadId');
 
-    let title = isDashboard ? '' : (screenTitles[location.pathname] || 'Inicio');
+    let title = isTopLevelScreen ? '' : (screenTitles[location.pathname] || 'Inicio');
     if (matchMateriaDetalle?.params.subjectId) {
         const subject = mockTeacherSubjects.find(s => s.id === matchMateriaDetalle.params.subjectId);
         title = subject ? subject.name : 'Detalle de Materia';
@@ -612,7 +620,7 @@ const TeacherApp: React.FC<TeacherAppProps> = ({ onLogout, isDrawerCollapsed, se
         backPath = `/foro/materias/${matchForoThread.params.subjectId}`;
     }
 
-    const showBackButton = !isDashboard;
+    const showBackButton = !isTopLevelScreen;
     
     return (
         <div className="min-h-screen font-sans antialiased text-slate-800 bg-slate-100">
@@ -628,35 +636,35 @@ const TeacherApp: React.FC<TeacherAppProps> = ({ onLogout, isDrawerCollapsed, se
                 isCollapsed={isDrawerCollapsed}
                 setIsCollapsed={setIsDrawerCollapsed}
             />
-            <main className={`relative transition-all duration-300 ease-in-out ${isDrawerCollapsed ? 'lg:ml-20' : 'lg:ml-64'} lg:pt-8 pb-24 lg:pb-0`}>
-                {!isDesktop && (
+            <main className={`relative transition-all duration-300 ease-in-out ${isDrawerCollapsed ? 'lg:ml-20' : 'lg:ml-64'} pb-24 lg:pb-0`}>
+                {!isDesktop && !isTopLevelScreen && (
                     <Header 
                         title={title} 
                         onProfileClick={() => setProfilePopoverOpen(true)}
                         showBackButton={showBackButton}
-                        isDashboard={isDashboard}
+                        isDashboard={false}
                         backPath={backPath}
                     />
                 )}
-                {isDesktop && isDashboard && (
-                    <div className="absolute top-6 right-6 z-10 flex items-center space-x-2">
-                        <Link to="/notificaciones" className="relative p-2 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-colors">
-                            <BellIcon className="w-7 h-7" />
-                            {hasUnread && <span className="absolute top-2 right-2 block w-2.5 h-2.5 bg-red-500 rounded-full" />}
+                {isDashboard && (
+                     <div className="absolute top-4 right-4 z-30 flex items-center space-x-2">
+                        <Link to="/notificaciones" className="relative p-2 rounded-full text-slate-600 bg-white/80 backdrop-blur-sm shadow-md hover:bg-slate-200 transition-colors">
+                            <BellIcon className="w-6 h-6" />
+                            {hasUnread && <span className="absolute top-2 right-2 block w-2 h-2 bg-red-500 rounded-full" />}
                         </Link>
-                         <button onClick={() => setProfilePopoverOpen(true)} className="p-2 rounded-full text-slate-600 hover:bg-slate-200">
-                            <UserCircleIcon className="w-7 h-7" />
+                         <button onClick={() => setProfilePopoverOpen(true)} className="p-2 rounded-full text-slate-600 bg-white/80 backdrop-blur-sm shadow-md hover:bg-slate-200 transition-colors">
+                            <UserCircleIcon className="w-6 h-6" />
                         </button>
                     </div>
                 )}
-                <div className="max-w-7xl mx-auto p-4 md:p-6">
+                <div className={`max-w-7xl mx-auto p-4 md:p-6 ${!isDesktop ? (isTopLevelScreen ? 'pt-6' : 'pt-[85px]') : 'pt-8'}`}>
                     <Routes>
                         <Route path="/" element={<TeacherDashboardScreen />} />
                         <Route path="/materias" element={<TeacherSubjectsScreen />} />
                         <Route path="/materias/detalle/:subjectId" element={<TeacherSubjectDetailScreen />} />
                         <Route path="/materias/detalle/:subjectId/calificaciones" element={<ManageGradesScreen />} />
-                        <Route path="/reservas" element={<PlaceholderScreen title="Reserva de Recursos" />} />
-                        <Route path="/calendario" element={<SchoolCalendarScreen />} />
+                        <Route path="/reservas" element={<ResourceReservationScreen />} />
+                        <Route path="/calendario" element={<SchoolCalendarScreen userRole="teacher" />} />
                         <Route path="/foro" element={<ForumHubScreen />} />
                         <Route path="/foro/materias/:subjectId" element={<ForumSubjectScreen userRole="teacher" />} />
                         <Route path="/foro/materias/:subjectId/thread/:threadId" element={<ForumThreadScreen userRole="teacher" />} />
@@ -696,6 +704,8 @@ const DirectorApp: React.FC<DirectorAppProps> = ({ onLogout, isDrawerCollapsed, 
 
     React.useEffect(() => { setHasUnread(hasUnreadNotifications()); }, [location.pathname]);
     
+    const topLevelPaths = ['/', '/gestion-academica', '/usuarios', '/reportes', '/comunicados-director', '/gestion-reclamos', '/auditoria'];
+    const isTopLevelScreen = topLevelPaths.includes(location.pathname);
     const isDashboard = location.pathname === '/';
 
     const screenTitles: { [key: string]: string } = {
@@ -711,8 +721,8 @@ const DirectorApp: React.FC<DirectorAppProps> = ({ onLogout, isDrawerCollapsed, 
         '/cambiar-contrasena': 'Cambiar Contraseña',
     };
     
-    let title = isDashboard ? '' : (screenTitles[location.pathname] || 'Inicio');
-    const showBackButton = !isDashboard;
+    let title = isTopLevelScreen ? '' : (screenTitles[location.pathname] || 'Inicio');
+    const showBackButton = !isTopLevelScreen;
 
     return (
         <div className="min-h-screen font-sans antialiased text-slate-800 bg-slate-100">
@@ -728,29 +738,29 @@ const DirectorApp: React.FC<DirectorAppProps> = ({ onLogout, isDrawerCollapsed, 
                 isCollapsed={isDrawerCollapsed}
                 setIsCollapsed={setIsDrawerCollapsed}
             />
-            <main className={`relative transition-all duration-300 ease-in-out ${isDrawerCollapsed ? 'lg:ml-20' : 'lg:ml-64'} lg:pt-8 pb-24 lg:pb-0`}>
-                {!isDesktop && (
+            <main className={`relative transition-all duration-300 ease-in-out ${isDrawerCollapsed ? 'lg:ml-20' : 'lg:ml-64'} pb-24 lg:pb-0`}>
+                {!isDesktop && !isTopLevelScreen && (
                     <Header 
                         title={title} 
                         onProfileClick={() => setProfilePopoverOpen(true)}
                         showBackButton={showBackButton}
-                        isDashboard={isDashboard}
+                        isDashboard={false}
                         backPath={'/'}
                         notificationsPath="/comunicados-director"
                     />
                 )}
-                {isDesktop && isDashboard && (
-                    <div className="absolute top-6 right-6 z-10 flex items-center space-x-2">
-                        <Link to="/comunicados-director" className="relative p-2 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-colors">
-                            <BellIcon className="w-7 h-7" />
-                            {hasUnread && <span className="absolute top-2 right-2 block w-2.5 h-2.5 bg-red-500 rounded-full" />}
+                {isDashboard && (
+                    <div className="absolute top-4 right-4 z-30 flex items-center space-x-2">
+                        <Link to="/comunicados-director" className="relative p-2 rounded-full text-slate-600 bg-white/80 backdrop-blur-sm shadow-md hover:bg-slate-200 transition-colors">
+                            <BellIcon className="w-6 h-6" />
+                            {hasUnread && <span className="absolute top-2 right-2 block w-2 h-2 bg-red-500 rounded-full" />}
                         </Link>
-                         <button onClick={() => setProfilePopoverOpen(true)} className="p-2 rounded-full text-slate-600 hover:bg-slate-200">
-                            <UserCircleIcon className="w-7 h-7" />
+                         <button onClick={() => setProfilePopoverOpen(true)} className="p-2 rounded-full text-slate-600 bg-white/80 backdrop-blur-sm shadow-md hover:bg-slate-200 transition-colors">
+                            <UserCircleIcon className="w-6 h-6" />
                         </button>
                     </div>
                 )}
-                <div className="max-w-7xl mx-auto p-4 md:p-6">
+                <div className={`max-w-7xl mx-auto p-4 md:p-6 ${!isDesktop ? (isTopLevelScreen ? 'pt-6' : 'pt-[85px]') : 'pt-8'}`}>
                     <Routes>
                         <Route path="/" element={<DirectorDashboardScreen />} />
                         <Route path="/gestion-academica" element={<AcademicManagementScreen />} />
@@ -792,7 +802,7 @@ const App: React.FC = () => {
         return () => clearTimeout(splashTimer);
     }, []);
 
-    const handleLogin = (role: UserRole) => {
+    const handleLogin = (role: AppUserRole) => {
         setUser({ role });
         navigate('/');
     };

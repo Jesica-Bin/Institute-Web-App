@@ -256,6 +256,15 @@ export interface TeacherSubjectDetail extends TeacherSubject {
   enrolledStudents: Student[];
 }
 
+export interface ClassLog {
+  id: string; // e.g., 'c1-2024-08-05'
+  eventId: string; // Corresponds to CalendarEvent id
+  date: string; // YYYY-MM-DD
+  topic: string;
+  activities: string;
+  observations?: string;
+}
+
 
 // --- Director/Admin Types ---
 export interface DirectorUser {
@@ -304,4 +313,27 @@ export interface ForumThread {
     replies: ForumPost[];
     status: 'open' | 'answered';
     isPinned: boolean;
+}
+
+// --- Resource Reservation Types ---
+export enum ResourceType {
+  PROJECTOR = 'Proyector',
+  COMPUTER_LAB = 'Sala de Computadoras',
+}
+
+export interface Resource {
+  id: string;
+  name: string;
+  type: ResourceType;
+}
+
+export interface Reservation {
+  id: string;
+  resourceId: string;
+  teacherId: string;
+  teacherName: string;
+  subject: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM
 }

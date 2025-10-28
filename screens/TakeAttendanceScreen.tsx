@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { mockStudents, mockCareers, mockYears, courseData } from '../data';
@@ -146,8 +145,6 @@ const TakeAttendanceScreen: React.FC = () => {
     const [summaryData, setSummaryData] = React.useState<SummaryData | null>(null);
     const [isSummaryModalOpen, setIsSummaryModalOpen] = React.useState(false);
     const [alertMessage, setAlertMessage] = React.useState<string | null>(null);
-
-    const isPrefilled = !!(preselectedCareer && preselectedYear && preselectedSubject);
 
     React.useEffect(() => {
         if (selectedCareer) {
@@ -305,12 +302,11 @@ const TakeAttendanceScreen: React.FC = () => {
             <div className="space-y-4 max-w-4xl mx-auto">
                 <div className="bg-white p-4 rounded-lg shadow-sm">
                     <p className="text-sm text-slate-500 mb-2">
-                        {isPrefilled ? `Tomando asistencia para ${selectedSubject}.` : 'Seleccione el año y la materia para ver la lista de estudiantes.'}
+                        {preselectedSubject ? `Tomando asistencia para ${selectedSubject}.` : 'Seleccione el año y la materia para ver la lista de estudiantes.'}
                     </p>
                      <select 
                         value={selectedCareer}
                         onChange={(e) => handleSelectCareer(e.target.value)}
-                        disabled={isPrefilled}
                         className={`${selectClass} mb-2`}
                      >
                         <option value="">Seleccione una carrera</option>
@@ -319,7 +315,6 @@ const TakeAttendanceScreen: React.FC = () => {
                      <select 
                         value={selectedYear}
                         onChange={handleYearChange}
-                        disabled={isPrefilled}
                         className={`${selectClass} mb-2`}
                      >
                         <option value="">Seleccione un año</option>
@@ -328,7 +323,7 @@ const TakeAttendanceScreen: React.FC = () => {
                     <select 
                         value={selectedSubject}
                         onChange={handleSubjectChange}
-                        disabled={isPrefilled || !selectedYear || availableSubjects.length === 0}
+                        disabled={!selectedYear || availableSubjects.length === 0}
                         className={selectClass}
                     >
                         <option value="">Seleccione una materia</option>

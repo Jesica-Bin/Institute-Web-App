@@ -1,4 +1,5 @@
 
+
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { mockStudentUser, mockStudentWeeklySchedule, mockWeeklyAttendance, mockEvents, mockStudentSubjects } from '../../data';
@@ -185,7 +186,7 @@ interface ShortcutButtonProps {
   icon: React.ElementType;
 }
 const ShortcutButton: React.FC<ShortcutButtonProps> = ({ to, text, icon: Icon }) => (
-    <Link to={to} className="flex flex-col items-center justify-center p-4 bg-white rounded-lg hover:bg-slate-100 transition-colors">
+    <Link to={to} className="h-full flex flex-col items-center justify-center p-4 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
         <Icon className="w-8 h-8 text-indigo-700 mb-2" />
         <span className="text-sm font-semibold text-slate-800 text-center">{text}</span>
     </Link>
@@ -279,110 +280,109 @@ const StudentDashboardScreen: React.FC = () => {
                  </div>
             )}
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column */}
-                <div className="space-y-6">
-                    {/* Schedule & Attendance Card */}
-                    <div className="bg-white p-4 rounded-lg shadow-sm flex flex-col h-full">
-                        <h2 className="text-lg font-semibold mb-3">Tu horario de hoy</h2>
-                        {todaySchedule.length > 0 ? (
-                            <div className="space-y-3">
-                                {todaySchedule.map(item => (
-                                    <div key={item.id} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-md">
-                                        <div className="w-1.5 h-10 bg-indigo-600 rounded-full"></div>
-                                        <div>
-                                            <p className="font-semibold">{item.subject}</p>
-                                            <p className="text-sm text-slate-500">{item.time}</p>
-                                        </div>
-                                    </div>
-                                ))}
+            <div className="bg-white p-4 rounded-lg shadow-sm">
+                <h2 className="text-lg font-semibold mb-3">Tu horario de hoy</h2>
+                {todaySchedule.length > 0 ? (
+                    <div className="space-y-3">
+                        {todaySchedule.map(item => (
+                            <div key={item.id} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-md">
+                                <div className="w-1.5 h-10 bg-indigo-600 rounded-full"></div>
+                                <div>
+                                    <p className="font-semibold">{item.subject}</p>
+                                    <p className="text-sm text-slate-500">{item.time}</p>
+                                </div>
                             </div>
-                        ) : (
-                            <div className="flex-grow flex items-center justify-center text-center text-slate-500 py-6">
-                                <p>No tienes clases programadas para hoy.</p>
-                            </div>
-                        )}
-                         <div className="mt-4">
-                            <button 
-                                onClick={() => setIsReasonModalOpen(true)}
-                                className="flex items-center justify-center w-full bg-amber-400 text-amber-900 font-bold py-3 rounded-lg hover:bg-amber-500 transition-colors"
-                            >
-                                <span>Avisar llegada tarde</span>
-                                <ChevronRightIcon className="w-5 h-5 ml-2" />
-                            </button>
-                        </div>
-                        
-                        <hr className="my-6 border-slate-100"/>
-                        
-                        <h2 className="text-lg font-semibold mb-4">Asistencia de la semana</h2>
-                        <div className="p-4 bg-slate-50 rounded-lg">
-                            <div className="flex justify-around items-center text-center">
-                                {attendanceData.map(({ day, status }) => (
-                                    <div key={day} className="flex flex-col items-center space-y-2">
-                                        <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center font-bold text-lg ${getStatusStyles(status)}`}>
-                                            {status}
-                                        </div>
-                                        <span className="text-sm font-medium text-slate-600">{day}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="mt-4 text-right">
-                            <Link to="/asistencia-registro" className="text-sm font-medium text-indigo-600 hover:underline">
-                                Ver registro completo
-                            </Link>
-                        </div>
-
+                        ))}
                     </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-6">
-                    {/* Foro de Consultas Card */}
-                    <div className="bg-white p-4 rounded-lg shadow-sm">
-                        <h2 className="text-lg font-semibold mb-3">Foro de Consultas</h2>
-                        <div className="space-y-3">
-                            {mockStudentSubjects.filter(s => s.status === 'cursando').slice(0, 4).map(subject => (
-                                <Link
-                                    key={subject.id}
-                                    to={`/materias/${subject.id}/foro`}
-                                    className="flex items-center justify-between p-3 bg-slate-50 rounded-md hover:bg-slate-100 transition-colors"
-                                >
-                                    <div className="flex items-center space-x-3">
-                                        <ChatBubbleLeftRightIcon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-                                        <div>
-                                            <p className="font-semibold text-sm">{subject.name}</p>
-                                        </div>
-                                    </div>
-                                    <span className="text-sm font-medium text-indigo-600">Ir al foro</span>
-                                </Link>
-                            ))}
-                        </div>
+                ) : (
+                    <div className="flex-grow flex items-center justify-center text-center text-slate-500 py-6">
+                        <p>No tienes clases programadas para hoy.</p>
                     </div>
+                )}
+                 <div className="mt-4">
+                    <button 
+                        onClick={() => setIsReasonModalOpen(true)}
+                        className="flex items-center justify-center w-full bg-amber-400 text-amber-900 font-bold py-3 rounded-lg hover:bg-amber-500 transition-colors"
+                    >
+                        <span>Avisar llegada tarde</span>
+                        <ChevronRightIcon className="w-5 h-5 ml-2" />
+                    </button>
                 </div>
             </div>
 
             {/* Shortcuts Section */}
             <div className="bg-white p-4 rounded-lg shadow-sm">
                 <h2 className="text-lg font-semibold mb-3">Atajos</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {shortcutButtons.map(shortcut => <ShortcutButton key={shortcut.key} to={shortcut.to} text={shortcut.text} icon={shortcut.icon} />)}
-                    <button 
-                        onClick={() => setIsShortcutModalOpen(true)}
-                        className="flex flex-col items-center justify-center p-4 bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-200 hover:border-slate-400 transition-colors"
-                    >
-                        {shortcutButtons.length > 0 ? (
-                            <>
-                                <PencilIcon className="w-8 h-8 text-slate-400 mb-2" />
-                                <span className="text-sm font-semibold text-slate-500 text-center">Editar</span>
-                            </>
-                        ) : (
-                            <>
-                                <PlusIcon className="w-8 h-8 text-slate-400 mb-2" />
-                                <span className="text-sm font-semibold text-slate-500 text-center">Agregar</span>
-                            </>
-                        )}
-                    </button>
+                <div className="flex space-x-4 overflow-x-auto pb-2">
+                    {shortcutButtons.map(shortcut => (
+                        <div key={shortcut.key} className="flex-shrink-0 w-28">
+                            <ShortcutButton to={shortcut.to} text={shortcut.text} icon={shortcut.icon} />
+                        </div>
+                    ))}
+                    <div className="flex-shrink-0 w-28">
+                        <button 
+                            onClick={() => setIsShortcutModalOpen(true)}
+                            className="w-full h-full flex flex-col items-center justify-center p-4 bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg hover:bg-slate-200 hover:border-slate-400 transition-colors"
+                        >
+                            {shortcutButtons.length > 0 ? (
+                                <>
+                                    <PencilIcon className="w-8 h-8 text-slate-400 mb-2" />
+                                    <span className="text-sm font-semibold text-slate-500 text-center">Editar</span>
+                                </>
+                            ) : (
+                                <>
+                                    <PlusIcon className="w-8 h-8 text-slate-400 mb-2" />
+                                    <span className="text-sm font-semibold text-slate-500 text-center">Agregar</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Asistencia de la semana */}
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <h2 className="text-lg font-semibold mb-4">Asistencia de la semana</h2>
+                    <div className="p-4 bg-slate-50 rounded-lg">
+                        <div className="flex justify-around items-center text-center">
+                            {attendanceData.map(({ day, status }) => (
+                                <div key={day} className="flex flex-col items-center space-y-2">
+                                    <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center font-bold text-lg ${getStatusStyles(status)}`}>
+                                        {status}
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-600">{day}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="mt-4 text-right">
+                        <Link to="/asistencia-registro" className="text-sm font-medium text-indigo-600 hover:underline">
+                            Ver registro completo
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Foro de Consultas Card */}
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <h2 className="text-lg font-semibold mb-3">Foro de Consultas</h2>
+                    <div className="space-y-3">
+                        {mockStudentSubjects.filter(s => s.status === 'cursando').slice(0, 4).map(subject => (
+                            <Link
+                                key={subject.id}
+                                to={`/materias/${subject.id}/foro`}
+                                className="flex items-center justify-between p-3 bg-slate-50 rounded-md hover:bg-slate-100 transition-colors"
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <ChatBubbleLeftRightIcon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+                                    <div>
+                                        <p className="font-semibold text-sm">{subject.name}</p>
+                                    </div>
+                                </div>
+                                <span className="text-sm font-medium text-indigo-600">Ir al foro</span>
+                            </Link>
+                        ))}
+                    </div>
                 </div>
             </div>
 
