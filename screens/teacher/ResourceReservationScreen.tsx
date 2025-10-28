@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { mockResources, mockReservations as initialReservations, mockTeacherUser, mockTeacherSubjects } from '../../data';
-import { Resource, ResourceType, Reservation } from '../../types';
-// FIX: Removed ClockIcon and CheckCircleIcon as they are not exported from Icons. Also removed other unused icons.
+import React, { useState, useMemo, useEffect } from 'react';
+import { fetchResources, fetchReservations, fetchTeacherSubjects } from '../../db';
+import { mockTeacherUser } from '../../data';
+import { Resource, ResourceType, Reservation, TeacherSubject } from '../../types';
 import { TrashIcon } from '../../components/Icons';
+import Spinner from '../../components/Spinner';
 
 type Tab = 'new' | 'mine';
 
@@ -10,7 +11,10 @@ const timeSlots = Array.from({ length: 14 }, (_, i) => `${(i + 8).toString().pad
 
 const ResourceReservationScreen: React.FC = () => {
     const [activeTab, setActiveTab] = useState<Tab>('new');
-    const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
+    const [reservations, setReservations] = useState<Reservation[]>([]);
+    const [resources, setResources] = useState<Resource[]>([]);
+    const [teacherSubjects, setTeacherSubjects] = useState<TeacherSubject[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Form state
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -19,10 +23,23 @@ const ResourceReservationScreen: React.FC = () => {
     const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
     const [selectedSubject, setSelectedSubject] = useState('');
 
+    useEffect(() => {
+        Promise.all([
+            fetchReservations(),
+            fetchResources(),
+            fetchTeacherSubjects(),
+        ]).then(([resData, rscData, subData]) => {
+            setReservations(resData);
+            setResources(rscData);
+            setTeacherSubjects(subData);
+            setIsLoading(false);
+        });
+    }, []);
+
     const availableResources = useMemo(() => {
         if (!selectedResourceType) return [];
-        return mockResources.filter(r => r.type === selectedResourceType);
-    }, [selectedResourceType]);
+        return resources.filter(r => r.type === selectedResourceType);
+    }, [selectedResourceType, resources]);
 
     const bookedSlots = useMemo(() => {
         if (!selectedResourceId || !selectedDate) return [];
@@ -52,7 +69,6 @@ const ResourceReservationScreen: React.FC = () => {
                 const currentIndex = timeSlots.indexOf(newSelection[i]);
                 const nextIndex = timeSlots.indexOf(newSelection[i+1]);
                 if (nextIndex !== currentIndex + 1) {
-                    // If not consecutive, start a new selection with just the clicked slot
                     return [slot];
                 }
             }
@@ -84,7 +100,6 @@ const ResourceReservationScreen: React.FC = () => {
 
         setReservations(prev => [...prev, newReservation]);
         alert('Reserva confirmada con éxito.');
-        // Reset form
         setSelectedSlots([]);
         setSelectedSubject('');
     };
@@ -102,6 +117,14 @@ const ResourceReservationScreen: React.FC = () => {
     }, [reservations]);
     
     const inputStyle = "w-full p-2 bg-white text-slate-800 border border-slate-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500";
+    
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Spinner />
+            </div>
+        );
+    }
     
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -158,7 +181,7 @@ const ResourceReservationScreen: React.FC = () => {
                                     <label htmlFor="res-subject" className="text-sm font-medium">5. Materia</label>
                                     <select id="res-subject" value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)} className={inputStyle} disabled={selectedSlots.length === 0}>
                                         <option value="">Seleccionar materia...</option>
-                                        {mockTeacherSubjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                                        {teacherSubjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
                                     </select>
                                 </div>
                                 <div className="self-end">
@@ -175,7 +198,7 @@ const ResourceReservationScreen: React.FC = () => {
             {activeTab === 'mine' && (
                 <div className="bg-white p-4 rounded-lg shadow-sm space-y-3">
                     {myReservations.length > 0 ? myReservations.map(res => {
-                        const resource = mockResources.find(r => r.id === res.resourceId);
+                        const resource = resources.find(r => r.id === res.resourceId);
                         return (
                             <div key={res.id} className="bg-slate-50 p-3 rounded-lg flex justify-between items-center">
                                 <div>

@@ -1,11 +1,11 @@
 
 import * as React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { mockSystemNotifications } from '../data';
-import { getOfficialCommunications } from '../store';
+import { getSystemNotifications, getOfficialCommunications } from '../store';
 import { Notification, NotificationType } from '../types';
 import { MegaphoneIcon, WrenchScrewdriverIcon, PlusIcon, ChevronRightIcon, AcademicCapIcon } from '../components/Icons';
 import NotificationDetailScreen from './NotificationDetailScreen';
+import Spinner from '../components/Spinner';
 
 type Tab = 'system' | 'official';
 
@@ -34,13 +34,27 @@ const TabButton = ({ label, active, onClick }: { label: string, active: boolean,
 };
 
 const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ userRole }) => {
-    const [activeTab, setActiveTab] = React.useState<Tab>('system');
-    const officialCommunications = getOfficialCommunications();
+    const [activeTab, setActiveTab] = React.useState<Tab>('official');
+    const [notifications, setNotifications] = React.useState<Notification[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [selectedNotification, setSelectedNotification] = React.useState<Notification | null>(null);
     const [isDesktop, setIsDesktop] = React.useState(window.innerWidth >= 1024);
     const navigate = useNavigate();
 
-    const notificationsToShow = activeTab === 'system' ? mockSystemNotifications : officialCommunications;
+    React.useEffect(() => {
+        setIsLoading(true);
+        const fetchNotifications = async () => {
+            if (activeTab === 'system') {
+                setNotifications(getSystemNotifications());
+            } else {
+                const comms = await getOfficialCommunications();
+                setNotifications(comms);
+            }
+            setIsLoading(false);
+        };
+        fetchNotifications();
+    }, [activeTab]);
+
 
     React.useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
@@ -49,16 +63,15 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ userRole }) =
     }, []);
     
     React.useEffect(() => {
-        if (isDesktop && notificationsToShow.length > 0) {
-            // Check if the current selection is still in the list, otherwise select the first one.
-            const selectionIsValid = notificationsToShow.some(n => n.id === selectedNotification?.id);
+        if (!isLoading && isDesktop && notifications.length > 0) {
+            const selectionIsValid = notifications.some(n => n.id === selectedNotification?.id);
             if (!selectionIsValid) {
-                setSelectedNotification(notificationsToShow[0]);
+                setSelectedNotification(notifications[0]);
             }
-        } else if (isDesktop && notificationsToShow.length === 0) {
+        } else if (!isLoading && isDesktop && notifications.length === 0) {
             setSelectedNotification(null);
         }
-    }, [isDesktop, notificationsToShow, selectedNotification, activeTab]);
+    }, [isDesktop, notifications, selectedNotification, isLoading, activeTab]);
 
     const handleNotificationClick = (notification: Notification) => {
         if (isDesktop) {
@@ -68,7 +81,6 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ userRole }) =
         }
     };
 
-    // Fix: Refactor NotificationItem to avoid passing the 'key' prop directly to a custom component, which was causing TypeScript errors.
     const NotificationItem: React.FC<{ notification: Notification }> = ({ notification }) => (
         <button
             onClick={() => handleNotificationClick(notification)}
@@ -105,16 +117,20 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ userRole }) =
                 </div>
             )}
             <div className="bg-slate-100 p-1 rounded-lg flex space-x-2">
-                <TabButton label="Sistema" active={activeTab === 'system'} onClick={() => setActiveTab('system')} />
                 <TabButton label="Oficiales" active={activeTab === 'official'} onClick={() => setActiveTab('official')} />
+                <TabButton label="Sistema" active={activeTab === 'system'} onClick={() => setActiveTab('system')} />
             </div>
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                {notificationsToShow.length > 0 ? (
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden min-h-[300px]">
+                {isLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                        <Spinner />
+                    </div>
+                ) : notifications.length > 0 ? (
                     <ul className="divide-y divide-slate-100">
-                        {notificationsToShow.map(notif => <li key={notif.id}><NotificationItem notification={notif} /></li>)}
+                        {notifications.map(notif => <li key={notif.id}><NotificationItem notification={notif} /></li>)}
                     </ul>
                 ) : (
-                    <div className="p-8 text-center text-slate-500">
+                    <div className="p-8 text-center text-slate-500 h-full flex items-center justify-center">
                         <p>No hay {activeTab === 'system' ? 'notificaciones' : 'comunicados'} por ahora.</p>
                     </div>
                 )}
@@ -139,9 +155,13 @@ const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ userRole }) =
                     <NotificationDetailScreen notification={selectedNotification} />
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center bg-white rounded-lg shadow-sm p-8 text-center">
-                        <MegaphoneIcon className="w-16 h-16 text-slate-300 mb-4" />
-                        <h3 className="text-xl font-bold text-slate-700">Selecciona una notificación</h3>
-                        <p className="text-slate-500 mt-2">Elige una notificación de la lista para ver su contenido completo.</p>
+                        {isLoading ? <Spinner /> : (
+                            <>
+                                <MegaphoneIcon className="w-16 h-16 text-slate-300 mb-4" />
+                                <h3 className="text-xl font-bold text-slate-700">Selecciona una notificación</h3>
+                                <p className="text-slate-500 mt-2">Elige una notificación de la lista para ver su contenido completo.</p>
+                            </>
+                        )}
                     </div>
                 )}
             </div>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockCareers } from '../data';
+import { fetchCareers } from '../db';
 import { Notification, NotificationType } from '../types';
 import { addOfficialCommunication } from '../store';
 import { PaperAirplaneIcon, CloudArrowUpIcon, TrashIcon } from '../components/Icons';
@@ -10,9 +10,19 @@ const CreateCommunicationScreen: React.FC = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [recipientType, setRecipientType] = useState('all'); // 'all' or 'specific'
-    const [selectedCareer, setSelectedCareer] = useState(mockCareers[0]);
+    const [careers, setCareers] = useState<string[]>([]);
+    const [selectedCareer, setSelectedCareer] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchCareers().then(data => {
+            setCareers(data);
+            if (data.length > 0) {
+                setSelectedCareer(data[0]);
+            }
+        });
+    }, []);
 
     const canSubmit = title.trim() !== '' && description.trim() !== '';
     
@@ -133,7 +143,7 @@ const CreateCommunicationScreen: React.FC = () => {
                         <div>
                             <label htmlFor="career" className="block text-sm font-medium text-slate-700 mb-1">Seleccionar carrera</label>
                             <select id="career" value={selectedCareer} onChange={e => setSelectedCareer(e.target.value)} className={inputStyle}>
-                                {mockCareers.map(c => <option key={c} value={c}>{c}</option>)}
+                                {careers.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
                     )}

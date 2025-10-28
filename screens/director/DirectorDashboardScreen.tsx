@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { mockDirectorUser, mockStudentStatsByCareer, mockDropoutData, mockSuggestions } from '../../data';
+import { fetchDirectorUser, fetchStudentStatsByCareer, fetchDropoutData, fetchSuggestions } from '../../db';
 import { UsersIcon, DocumentChartBarIcon, BriefcaseIcon, MegaphoneIcon } from '../../components/Icons';
-import { SuggestionStatus } from '../../types';
+import { SuggestionStatus, DirectorUser } from '../../types';
+import Spinner from '../../components/Spinner';
 
 const KPICard: React.FC<{ title: string; value: string; icon: React.ElementType }> = ({ title, value, icon: Icon }) => (
     <div className="bg-white p-4 rounded-lg shadow-sm flex items-center space-x-4">
@@ -41,31 +42,54 @@ const BarChart: React.FC<{ title: string; data: { name: string; value: number; c
 };
 
 const DirectorDashboardScreen: React.FC = () => {
-    const today = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const pendingClaims = mockSuggestions.filter(s => s.status === SuggestionStatus.IN_REVIEW || s.status === SuggestionStatus.SENT).length;
+    const [directorUser, setDirectorUser] = React.useState<DirectorUser | null>(null);
+    const [studentStats, setStudentStats] = React.useState<any[]>([]);
+    const [dropoutData, setDropoutData] = React.useState<any[]>([]);
+    const [pendingClaims, setPendingClaims] = React.useState(0);
+    const [isLoading, setIsLoading] = React.useState(true);
+    
+    React.useEffect(() => {
+        Promise.all([
+            fetchDirectorUser(),
+            fetchStudentStatsByCareer(),
+            fetchDropoutData(),
+            fetchSuggestions(),
+        ]).then(([user, stats, dropout, suggestions]) => {
+            setDirectorUser(user);
+            setStudentStats(stats);
+            setDropoutData(dropout);
+            setPendingClaims(suggestions.filter(s => s.status === SuggestionStatus.IN_REVIEW || s.status === SuggestionStatus.SENT).length);
+            setIsLoading(false);
+        });
+    }, []);
+
+    if (isLoading || !directorUser) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Spinner size="lg" />
+            </div>
+        );
+    }
     
     return (
         <div className="space-y-6">
              <div>
                 <h1 className="text-2xl font-bold text-slate-800">Panel de Dirección</h1>
-                <p className="text-slate-500 capitalize">Bienvenida, {mockDirectorUser.name.split(' ')[0]}</p>
+                <p className="text-slate-500 capitalize">Bienvenida, {directorUser.name.split(' ')[0]}</p>
             </div>
 
-            {/* KPIs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <KPICard title="Alumnos Activos" value="853" icon={UsersIcon} />
+                <KPICard title="Alumnos Activos" value={studentStats.reduce((sum, item) => sum + item.value, 0).toString()} icon={UsersIcon} />
                 <KPICard title="Docentes" value="42" icon={UsersIcon} />
-                <KPICard title="Carreras" value="4" icon={BriefcaseIcon} />
+                <KPICard title="Carreras" value={studentStats.length.toString()} icon={BriefcaseIcon} />
                 <KPICard title="Reclamos Pendientes" value={pendingClaims.toString()} icon={MegaphoneIcon} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                {/* Main content */}
                 <div className="lg:col-span-3 space-y-6">
-                    <BarChart title="Alumnos por Carrera" data={mockStudentStatsByCareer} />
-                    <BarChart title="Tasa de Deserción (Anual)" data={mockDropoutData.map(d => ({ name: d.year.toString(), value: d.rate, color: 'bg-red-500' }))} unit="%" />
+                    <BarChart title="Alumnos por Carrera" data={studentStats} />
+                    <BarChart title="Tasa de Deserción (Anual)" data={dropoutData.map(d => ({ name: d.year.toString(), value: d.rate, color: 'bg-red-500' }))} unit="%" />
                 </div>
-                {/* Sidebar */}
                 <div className="lg:col-span-2 space-y-6">
                      <div className="bg-white p-4 rounded-lg shadow-sm">
                         <h3 className="font-semibold text-slate-700 mb-3">Accesos Rápidos</h3>

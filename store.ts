@@ -1,14 +1,24 @@
 import { AttendanceStatus, CalendarEvent, CalendarEventType, ClassStatus, SubjectDetail, Notification, StudentRequest, RequestStatus, ClassLog } from './types';
-import { mockCalendarEvents, mockUser, mockStudentUser, mockOfficialCommunications, mockRequests, mockSystemNotifications, mockClassLogs } from './data';
+import * as db from './db';
+import { mockSystemNotifications } from './data';
 
-// --- Centralized In-Memory Store ---
-const _store = {
+// --- Centralized In-Memory Store (acts as a cache) ---
+interface AppStore {
+  holidaysProcessed: boolean;
+  officialCommunications: Notification[] | null;
+  requests: StudentRequest[] | null;
+  calendarEvents: CalendarEvent[] | null;
+  classLogs: ClassLog[] | null;
+}
+
+const _store: AppStore = {
   holidaysProcessed: false,
-  officialCommunications: [...mockOfficialCommunications],
-  requests: [...mockRequests],
-  calendarEvents: [...mockCalendarEvents],
-  classLogs: [...mockClassLogs],
+  officialCommunications: null,
+  requests: null,
+  calendarEvents: null,
+  classLogs: null,
 };
+
 
 // Structure: { "YYYY-MM-DD": { "Subject Name": { studentId: status } } }
 type AttendanceStoreData = {
@@ -143,12 +153,11 @@ export const calculateTotalClassesForSubject = (
     const winterBreakEnd = winterBreakEndDate ? new Date(winterBreakEndDate + 'T00:00:00') : null;
 
     const holidays = new Set(
-        _store.calendarEvents
+        (_store.calendarEvents || [])
             .filter(e => e.type === CalendarEventType.HOLIDAY || e.type === CalendarEventType.INSTITUTIONAL)
             .map(e => e.date)
     );
     
-    // Add fetched national holidays to the set
     const year = new Date(startDate).getFullYear();
     (nationalHolidaysCache[year] || []).forEach(h => holidays.add(h.date));
 
@@ -291,11 +300,21 @@ export const getFullAttendanceStore = (): AttendanceStoreData => {
 // --- Synced State Management ---
 
 // Official Communications
-export const getOfficialCommunications = (): Notification[] => {
-    return _store.officialCommunications.sort((a, b) => b.id - a.id);
+export const getOfficialCommunications = async (): Promise<Notification[]> => {
+    if (_store.officialCommunications) {
+        return Promise.resolve(_store.officialCommunications.sort((a, b) => b.id - a.id));
+    }
+    const communications = await db.fetchOfficialCommunications();
+    _store.officialCommunications = communications;
+    return communications.sort((a, b) => b.id - a.id);
 };
+
 export const addOfficialCommunication = (notification: Notification) => {
-    _store.officialCommunications.unshift(notification);
+    if (_store.officialCommunications) {
+        _store.officialCommunications.unshift(notification);
+    } else {
+        _store.officialCommunications = [notification];
+    }
 };
 
 // System Notifications
@@ -305,22 +324,38 @@ export const getSystemNotifications = (): Notification[] => {
 
 // Unread Check
 export const hasUnreadNotifications = (): boolean => {
-    const allNotifications = [...getSystemNotifications(), ...getOfficialCommunications()];
+    const allNotifications = [...getSystemNotifications(), ...(_store.officialCommunications || [])];
     return allNotifications.some(notification => !notification.read);
 };
 
 // Student Requests
-export const getRequests = (): StudentRequest[] => {
-    return _store.requests.sort((a, b) => b.id - a.id);
+export const getRequests = async (): Promise<StudentRequest[]> => {
+    if (_store.requests) {
+        return Promise.resolve(_store.requests.sort((a, b) => b.id - a.id));
+    }
+    const requests = await db.fetchRequests();
+    _store.requests = requests;
+    return requests.sort((a, b) => b.id - a.id);
 };
+
 export const addRequest = (request: StudentRequest) => {
-    _store.requests.unshift(request);
+    if (_store.requests) {
+        _store.requests.unshift(request);
+    } else {
+        _store.requests = [request];
+    }
 };
 
 // Calendar Events
-export const getCalendarEvents = (): CalendarEvent[] => {
+export const getCalendarEvents = async (): Promise<CalendarEvent[]> => {
+    if (_store.calendarEvents) {
+         return Promise.resolve(_store.calendarEvents.sort((a,b) => a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || '')));
+    }
+    
+    const events = await db.fetchCalendarEvents();
+    _store.calendarEvents = events;
+
     if (!_store.holidaysProcessed) {
-        // This is a simplified, one-time processing step for the mock data
         const allHolidayDates = new Set(
             _store.calendarEvents
                 .filter(e => e.type === CalendarEventType.HOLIDAY || e.type === CalendarEventType.INSTITUTIONAL)
@@ -328,40 +363,49 @@ export const getCalendarEvents = (): CalendarEvent[] => {
         );
         _store.calendarEvents = _store.calendarEvents.map(event => {
             if (event.type === CalendarEventType.CLASS && allHolidayDates.has(event.date)) {
-                // FIX: Use enum member for status to match the 'ClassStatus' type.
                 return { ...event, status: ClassStatus.CANCELED };
             }
             return event;
         });
-        _store.holidaysProcessed = true; // Mark as processed
+        _store.holidaysProcessed = true;
     }
     return _store.calendarEvents.sort((a,b) => a.date.localeCompare(b.date) || (a.startTime || '').localeCompare(b.startTime || ''));
 };
+
 export const setCalendarEvents = (events: CalendarEvent[]) => {
     _store.calendarEvents = events;
 };
 
 // Added function to update a single event
 export const updateCalendarEvent = (updatedEvent: CalendarEvent) => {
+    if (!_store.calendarEvents) return;
     const eventIndex = _store.calendarEvents.findIndex(e => e.id === updatedEvent.id);
     if (eventIndex > -1) {
         _store.calendarEvents[eventIndex] = updatedEvent;
     }
-    // To trigger re-renders in components that use getCalendarEvents
     _store.calendarEvents = [..._store.calendarEvents]; 
 };
 
 // --- Class Log Management ---
-export const getClassLogs = (): ClassLog[] => {
-    return _store.classLogs;
+export const getClassLogs = async (): Promise<ClassLog[]> => {
+    if (_store.classLogs) {
+        return Promise.resolve(_store.classLogs);
+    }
+    const logs = await db.fetchClassLogs();
+    _store.classLogs = logs;
+    return logs;
 };
 
 export const getClassLogForEvent = (eventId: string, date: string): ClassLog | undefined => {
+    if (!_store.classLogs) return undefined;
     const logId = `${eventId}-${date}`;
     return _store.classLogs.find(log => log.id === logId);
 };
 
 export const addOrUpdateClassLog = (log: Omit<ClassLog, 'id'>) => {
+    if (!_store.classLogs) {
+        _store.classLogs = [];
+    }
     const logId = `${log.eventId}-${log.date}`;
     const existingIndex = _store.classLogs.findIndex(l => l.id === logId);
     

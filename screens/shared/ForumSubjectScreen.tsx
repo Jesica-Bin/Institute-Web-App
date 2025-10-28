@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
-import { mockForumThreads, mockTeacherSubjects, mockStudentSubjects } from '../../data';
-import { UserRole, ForumThread } from '../../types';
+import { fetchForumThreads, fetchTeacherSubjects, fetchStudentSubjects } from '../../db';
+import { UserRole, ForumThread, TeacherSubject, StudentSubject } from '../../types';
 import { PlusIcon, ChatBubbleLeftRightIcon } from '../../components/Icons';
+import Spinner from '../../components/Spinner';
 
 interface ForumSubjectScreenProps {
     userRole: UserRole;
@@ -19,15 +20,42 @@ const ThreadStatusBadge: React.FC<{ status: 'open' | 'answered' }> = ({ status }
 const ForumSubjectScreen: React.FC<ForumSubjectScreenProps> = ({ userRole }) => {
     const { subjectId } = useParams<{ subjectId: string }>();
     const navigate = useNavigate();
-    const location = useLocation();
     
-    const subject = [...mockTeacherSubjects, ...mockStudentSubjects].find(s => s.id === subjectId);
+    const [subject, setSubject] = React.useState<TeacherSubject | StudentSubject | null>(null);
+    const [threads, setThreads] = React.useState<ForumThread[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     
-    const threads = mockForumThreads.filter(t => t.subjectId === subjectId).sort((a, b) => {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    React.useEffect(() => {
+        if (!subjectId) {
+            setIsLoading(false);
+            return;
+        }
+
+        const fetchData = async () => {
+            setIsLoading(true);
+            const allThreads = await fetchForumThreads();
+            const [teacherSubjects, studentSubjects] = await Promise.all([
+                fetchTeacherSubjects(),
+                fetchStudentSubjects()
+            ]);
+            
+            const currentSubject = [...teacherSubjects, ...studentSubjects].find(s => s.id === subjectId) || null;
+            
+            const subjectThreads = allThreads
+                .filter(t => t.subjectId === subjectId)
+                .sort((a, b) => {
+                    if (a.isPinned && !b.isPinned) return -1;
+                    if (!a.isPinned && b.isPinned) return 1;
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                });
+            
+            setSubject(currentSubject);
+            setThreads(subjectThreads);
+            setIsLoading(false);
+        };
+
+        fetchData();
+    }, [subjectId]);
 
     const handleThreadClick = (threadId: number) => {
         if (userRole === 'teacher') {
@@ -38,6 +66,14 @@ const ForumSubjectScreen: React.FC<ForumSubjectScreenProps> = ({ userRole }) => 
     };
     
     const newThreadPath = userRole === 'teacher' ? '#' : `/materias/${subjectId}/foro/nueva-pregunta`;
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Spinner />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

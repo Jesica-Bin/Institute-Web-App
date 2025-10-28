@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockSuggestions } from '../../data';
+import { fetchSuggestions } from '../../db';
 import { Suggestion, SuggestionStatus } from '../../types';
 import { ChevronRightIcon, MegaphoneIcon } from '../../components/Icons';
+import Spinner from '../../components/Spinner';
 
 const StatusBadge = ({ status }: { status: SuggestionStatus }) => {
     const colorClasses = {
@@ -19,6 +20,15 @@ const StatusBadge = ({ status }: { status: SuggestionStatus }) => {
 
 const SuggestionsScreen: React.FC = () => {
     const navigate = useNavigate();
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchSuggestions().then(data => {
+            setSuggestions(data);
+            setIsLoading(false);
+        });
+    }, []);
 
     const handleSuggestionClick = (suggestion: Suggestion) => {
         navigate(`/sugerencia-detalle/${suggestion.id}`);
@@ -37,11 +47,15 @@ const SuggestionsScreen: React.FC = () => {
                 </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm">
+            <div className="bg-white rounded-lg shadow-sm min-h-[200px]">
                  <h2 className="text-lg font-bold text-slate-800 p-4 border-b border-slate-100">Mis Envíos</h2>
-                 {mockSuggestions.length > 0 ? (
+                 {isLoading ? (
+                     <div className="flex justify-center items-center p-8">
+                         <Spinner />
+                     </div>
+                 ) : suggestions.length > 0 ? (
                     <ul className="divide-y divide-slate-100">
-                        {mockSuggestions.map(sug => (
+                        {suggestions.map(sug => (
                             <li key={sug.id} onClick={() => handleSuggestionClick(sug)} className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50">
                                 <div>
                                     <p className="font-semibold">{sug.title}</p>

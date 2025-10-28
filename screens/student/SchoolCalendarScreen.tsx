@@ -99,7 +99,14 @@ const StudentSchoolCalendarScreen: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
     const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
     
-    const allEvents = getCalendarEvents();
+    // Fix: Use state and effect to handle asynchronous data fetching.
+    const [allEvents, setAllEvents] = useState<CalendarEvent[]>([]);
+
+    useEffect(() => {
+        getCalendarEvents().then(events => {
+            setAllEvents(events);
+        });
+    }, []);
 
     useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 1024);

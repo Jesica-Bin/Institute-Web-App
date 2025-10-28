@@ -61,7 +61,7 @@ const SchoolCalendarScreen: React.FC<SchoolCalendarScreenProps> = ({ userRole })
     const [currentDate, setCurrentDate] = React.useState(initialDate);
     const [selectedDate, setSelectedDate] = React.useState(initialDate);
     const [viewMode, setViewMode] = React.useState<'month' | 'week'>('month');
-    const [events, setEvents] = React.useState<CalendarEvent[]>(getCalendarEvents());
+    const [events, setEvents] = React.useState<CalendarEvent[]>([]);
     const [isAddEventModalOpen, setAddEventModalOpen] = React.useState(false);
     const [isConfigModalOpen, setIsConfigModalOpen] = React.useState(false);
     const [isSwapModalOpen, setIsSwapModalOpen] = React.useState(false);
@@ -86,7 +86,8 @@ const SchoolCalendarScreen: React.FC<SchoolCalendarScreenProps> = ({ userRole })
             const nationalHolidayDates = new Set(nationalHolidays.map(h => h.date));
             const institutionalHolidayDates = new Set<string>();
 
-            const currentEvents = getCalendarEvents();
+            // Fix: Await getCalendarEvents() as it returns a Promise.
+            const currentEvents = await getCalendarEvents();
 
             currentEvents.forEach(event => {
                 if (event.type === CalendarEventType.HOLIDAY || event.type === CalendarEventType.INSTITUTIONAL) {

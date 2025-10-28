@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockAbsencesToJustify } from '../../data';
+import { fetchAbsencesToJustify } from '../../db';
 import { AbsenceToJustify, JustificationStatus } from '../../types';
 import { ChevronRightIcon } from '../../components/Icons';
+import Spinner from '../../components/Spinner';
 
 const StatusBadge = ({ status }: { status: JustificationStatus }) => {
     const colorClasses = {
@@ -20,6 +21,15 @@ const StatusBadge = ({ status }: { status: JustificationStatus }) => {
 
 const JustifyAbsenceScreen: React.FC = () => {
     const navigate = useNavigate();
+    const [absences, setAbsences] = useState<AbsenceToJustify[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchAbsencesToJustify().then(data => {
+            setAbsences(data);
+            setIsLoading(false);
+        });
+    }, []);
 
     const handleAbsenceClick = (absence: AbsenceToJustify) => {
         if (absence.status === JustificationStatus.REJECTED) {
@@ -30,10 +40,18 @@ const JustifyAbsenceScreen: React.FC = () => {
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Spinner />
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-4 max-w-2xl mx-auto">
             <div className="space-y-3">
-                {mockAbsencesToJustify.map((absence: AbsenceToJustify) => (
+                {absences.map((absence: AbsenceToJustify) => (
                     <button
                         key={absence.id}
                         className="w-full flex justify-between items-center p-4 bg-white rounded-lg shadow-sm text-left hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"

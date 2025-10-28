@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { mockAuditLogs } from '../../data';
+import { fetchAuditLogs } from '../../db';
 import { AuditLog, UserRole } from '../../types';
 import { ShieldCheckIcon, CircleStackIcon, ArrowDownTrayIcon } from '../../components/Icons';
+import Spinner from '../../components/Spinner';
 
 const RoleBadge: React.FC<{ role: UserRole }> = ({ role }) => {
     const styles: Record<UserRole, string> = {
@@ -14,6 +15,15 @@ const RoleBadge: React.FC<{ role: UserRole }> = ({ role }) => {
 };
 
 const AuditScreen: React.FC = () => {
+    const [logs, setLogs] = React.useState<AuditLog[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        fetchAuditLogs().then(data => {
+            setLogs(data);
+            setIsLoading(false);
+        });
+    }, []);
     
     const handleGenerateBackup = () => {
         alert('Simulando generación de backup de la base de datos... El archivo se enviará a su correo.');
@@ -50,38 +60,44 @@ const AuditScreen: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden min-h-[400px]">
                 <div className="p-4 border-b border-slate-100">
                     <h2 className="text-lg font-semibold text-slate-800 flex items-center space-x-2">
                         <ShieldCheckIcon className="w-6 h-6 text-indigo-700" />
                         <span>Registro de Auditoría Reciente</span>
                     </h2>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-slate-700 uppercase bg-slate-50">
-                            <tr>
-                                <th scope="col" className="px-6 py-3">Usuario</th>
-                                <th scope="col" className="px-6 py-3">Acción</th>
-                                <th scope="col" className="px-6 py-3">Fecha y Hora</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {mockAuditLogs.map(log => (
-                                <tr key={log.id} className="bg-white border-b border-slate-100 hover:bg-slate-50">
-                                    <td className="px-6 py-4">
-                                        <p className="font-medium text-slate-900">{log.user}</p>
-                                        <RoleBadge role={log.role} />
-                                    </td>
-                                    <td className="px-6 py-4 text-slate-600">{log.action}</td>
-                                    <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
-                                        {new Date(log.timestamp).toLocaleString('es-ES')}
-                                    </td>
+                {isLoading ? (
+                    <div className="flex justify-center items-center h-full py-16">
+                        <Spinner />
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="text-xs text-slate-700 uppercase bg-slate-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3">Usuario</th>
+                                    <th scope="col" className="px-6 py-3">Acción</th>
+                                    <th scope="col" className="px-6 py-3">Fecha y Hora</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {logs.map(log => (
+                                    <tr key={log.id} className="bg-white border-b border-slate-100 hover:bg-slate-50">
+                                        <td className="px-6 py-4">
+                                            <p className="font-medium text-slate-900">{log.user}</p>
+                                            <RoleBadge role={log.role} />
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-600">{log.action}</td>
+                                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
+                                            {new Date(log.timestamp).toLocaleString('es-ES')}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </div>
     );

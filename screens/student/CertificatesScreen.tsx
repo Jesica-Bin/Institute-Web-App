@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { mockCertificateRequests } from '../../data';
-import { CertificateStatus } from '../../types';
+import { fetchCertificateRequests } from '../../db';
+import { CertificateRequest, CertificateStatus } from '../../types';
 import { DocumentTextIcon } from '../../components/Icons';
+import Spinner from '../../components/Spinner';
 
 const StatusBadge = ({ status }: { status: CertificateStatus }) => {
     const colorClasses = {
@@ -19,6 +20,15 @@ const StatusBadge = ({ status }: { status: CertificateStatus }) => {
 
 const CertificatesScreen: React.FC = () => {
     const navigate = useNavigate();
+    const [requests, setRequests] = useState<CertificateRequest[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchCertificateRequests().then(data => {
+            setRequests(data);
+            setIsLoading(false);
+        });
+    }, []);
 
     const isExpired = (expiryDate: string | undefined): boolean => {
         if (!expiryDate) return false;
@@ -42,11 +52,15 @@ const CertificatesScreen: React.FC = () => {
                 </Link>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm">
+            <div className="bg-white rounded-lg shadow-sm min-h-[200px]">
                  <h2 className="text-lg font-bold text-slate-800 p-4 border-b border-slate-100">Mis Solicitudes</h2>
-                 {mockCertificateRequests.length > 0 ? (
+                 {isLoading ? (
+                     <div className="flex justify-center items-center p-8">
+                         <Spinner />
+                     </div>
+                 ) : requests.length > 0 ? (
                     <ul className="divide-y divide-slate-100">
-                        {mockCertificateRequests.map(req => (
+                        {requests.map(req => (
                             <li key={req.id}>
                                 <button onClick={() => handleRequestClick(req.id)} className="w-full text-left p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                                     <div>

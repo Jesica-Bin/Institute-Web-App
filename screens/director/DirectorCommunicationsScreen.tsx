@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getOfficialCommunications, addOfficialCommunication } from '../../store';
 import { Notification, NotificationType } from '../../types';
@@ -102,7 +102,15 @@ const CreateCommunicationForm: React.FC<{ onFormSubmit: () => void }> = ({ onFor
 };
 
 const SentCommunicationsList: React.FC = () => {
-    const communications = getOfficialCommunications();
+    // Fix: Use state and effect to handle asynchronous data fetching.
+    const [communications, setCommunications] = React.useState<Notification[]>([]);
+    
+    React.useEffect(() => {
+        getOfficialCommunications().then(data => {
+            setCommunications(data);
+        });
+    }, []);
+
     return (
         <div className="space-y-4">
             <h2 className="text-xl font-bold text-slate-800">Historial de Comunicados</h2>

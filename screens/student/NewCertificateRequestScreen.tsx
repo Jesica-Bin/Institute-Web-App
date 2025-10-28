@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockCertificateTypes } from '../../data';
+import { fetchCertificateTypes } from '../../db';
 
 const NewCertificateRequestScreen: React.FC = () => {
     const navigate = useNavigate();
+    const [certificateTypes, setCertificateTypes] = useState<string[]>([]);
+
+    useEffect(() => {
+        fetchCertificateTypes().then(setCertificateTypes);
+    }, []);
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        // Here you would typically handle form submission, e.g., send to an API.
-        // For this mock, we'll just show an alert and navigate back.
         alert('Tu solicitud ha sido enviada con éxito. Recibirás una notificación cuando esté lista.');
         navigate('/certificados');
     };
@@ -29,7 +32,7 @@ const NewCertificateRequestScreen: React.FC = () => {
                             required
                         >
                             <option value="" disabled>Selecciona una opción...</option>
-                            {mockCertificateTypes.map(type => (
+                            {certificateTypes.map(type => (
                                 <option key={type} value={type}>{type}</option>
                             ))}
                         </select>

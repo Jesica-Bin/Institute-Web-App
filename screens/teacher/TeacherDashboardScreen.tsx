@@ -81,15 +81,23 @@ const TeacherDashboardScreen: React.FC = () => {
     const recentNotifications = mockOfficialCommunications.slice(0, 3);
     const [isLogModalOpen, setIsLogModalOpen] = React.useState(false);
     const [selectedEvent, setSelectedEvent] = React.useState<CalendarEvent | null>(null);
-    const [_, setForceUpdate] = React.useState(0); // Helper to force re-render on data change
+    // Fix: Use state to store classes and a forceUpdate trigger for re-fetching.
+    const [todaysClasses, setTodaysClasses] = React.useState<CalendarEvent[]>([]);
+    const [forceUpdate, setForceUpdate] = React.useState(0);
 
-    // Use a fixed date to match mock data
-    const todayStr = '2025-10-08'; 
-    const todaysClasses = getCalendarEvents().filter(event => 
-        event.date === todayStr &&
-        event.type === CalendarEventType.CLASS &&
-        (event.professor === mockTeacherUser.name || event.professor?.includes('Martinez')) // Martinez has a DICTATED class
-    ).sort((a,b) => (a.startTime || '0').localeCompare(b.startTime || '0'));
+    React.useEffect(() => {
+        // Use a fixed date to match mock data
+        const todayStr = '2025-10-08';
+        getCalendarEvents().then(allEvents => {
+            const filteredClasses = allEvents.filter(event => 
+                event.date === todayStr &&
+                event.type === CalendarEventType.CLASS &&
+                (event.professor === mockTeacherUser.name || event.professor?.includes('Martinez')) // Martinez has a DICTATED class
+            ).sort((a,b) => (a.startTime || '0').localeCompare(b.startTime || '0'));
+            setTodaysClasses(filteredClasses);
+        });
+    }, [forceUpdate]);
+
 
     const handleOpenLogModal = (event: CalendarEvent) => {
         setSelectedEvent(event);

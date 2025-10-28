@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { useParams } from 'react-router-dom';
-import { mockForumThreads } from '../../data';
-import { ForumPost, UserRole } from '../../types';
+import { fetchForumThreads } from '../../db';
+import { ForumPost, UserRole, ForumThread } from '../../types';
 import { UserCircleIcon, CheckBadgeIcon } from '../../components/Icons';
+import Spinner from '../../components/Spinner';
 
 interface ForumThreadScreenProps {
     userRole: UserRole;
@@ -29,9 +30,27 @@ const PostCard: React.FC<{ post: ForumPost | { content: string, authorName: stri
 const ForumThreadScreen: React.FC<ForumThreadScreenProps> = ({ userRole }) => {
     const { threadId } = useParams<{ threadId: string }>();
     const [reply, setReply] = React.useState('');
+    const [thread, setThread] = React.useState<ForumThread | null>(null);
+    const [isLoading, setIsLoading] = React.useState(true);
     
-    // In a real app, you'd fetch this. Here we find it in mock data.
-    const thread = mockForumThreads.find(t => t.id.toString() === threadId);
+    React.useEffect(() => {
+        if (threadId) {
+            setIsLoading(true);
+            fetchForumThreads().then(allThreads => {
+                const currentThread = allThreads.find(t => t.id.toString() === threadId);
+                setThread(currentThread || null);
+                setIsLoading(false);
+            });
+        }
+    }, [threadId]);
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Spinner />
+            </div>
+        );
+    }
 
     if (!thread) {
         return <div className="text-center p-8 bg-white rounded-lg shadow-sm">No se encontró la consulta.</div>;

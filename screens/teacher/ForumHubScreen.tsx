@@ -1,9 +1,21 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { mockTeacherSubjects, mockForumThreads } from '../../data';
+import { fetchTeacherSubjects, fetchForumThreads } from '../../db';
+import { mockForumThreads } from '../../data';
+import { TeacherSubject } from '../../types';
 import { ChevronRightIcon, ChatBubbleLeftRightIcon } from '../../components/Icons';
+import Spinner from '../../components/Spinner';
 
 const ForumHubScreen: React.FC = () => {
+    const [subjects, setSubjects] = React.useState<TeacherSubject[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        fetchTeacherSubjects().then(data => {
+            setSubjects(data);
+            setIsLoading(false);
+        });
+    }, []);
 
     const getSubjectStats = (subjectId: string) => {
         const threads = mockForumThreads.filter(t => t.subjectId === subjectId);
@@ -11,13 +23,21 @@ const ForumHubScreen: React.FC = () => {
         return { total: threads.length, open: openThreads };
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Spinner />
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-4xl mx-auto space-y-4">
             <h1 className="text-2xl font-bold text-slate-800">Foro de Intercambio</h1>
             <p className="text-slate-500">Selecciona una de tus materias para ver las consultas de los estudiantes.</p>
 
             <div className="space-y-3 pt-4">
-                {mockTeacherSubjects.map(subject => {
+                {subjects.map(subject => {
                     const stats = getSubjectStats(subject.id);
                     return (
                         <Link

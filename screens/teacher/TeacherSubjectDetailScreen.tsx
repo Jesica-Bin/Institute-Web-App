@@ -3,25 +3,35 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { mockTeacherSubjectDetails } from '../../data';
 import { DocumentTextIcon, UsersIcon, BookOpenIcon, ClipboardDocumentListIcon, ChevronDownIcon, ChevronUpIcon } from '../../components/Icons';
 import { getClassLogs, getCalendarEvents } from '../../store';
+import { ClassLog } from '../../types';
 
 const TeacherSubjectDetailScreen: React.FC = () => {
     const { subjectId } = useParams<{ subjectId: string }>();
     const navigate = useNavigate();
     const subject = subjectId ? mockTeacherSubjectDetails[subjectId] : null;
     const [expandedLogId, setExpandedLogId] = React.useState<string | null>(null);
+    // Fix: Use state and effect for async data fetching.
+    const [subjectLogs, setSubjectLogs] = React.useState<ClassLog[]>([]);
 
-    const subjectLogs = React.useMemo(() => {
-        if (!subject) return [];
-        const allLogs = getClassLogs();
-        const allEvents = getCalendarEvents();
-    
-        return allLogs
-            .filter(log => {
-                const event = allEvents.find(e => e.id === log.eventId);
-                return event?.title === subject?.name;
-            })
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [subject?.name]);
+    React.useEffect(() => {
+        if (!subject) return;
+
+        const fetchAndSetLogs = async () => {
+            const allLogs = await getClassLogs();
+            const allEvents = await getCalendarEvents();
+        
+            const filteredLogs = allLogs
+                .filter(log => {
+                    const event = allEvents.find(e => e.id === log.eventId);
+                    return event?.title === subject?.name;
+                })
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            
+            setSubjectLogs(filteredLogs);
+        };
+
+        fetchAndSetLogs();
+    }, [subject]);
 
     if (!subject) {
         return <div className="text-center p-8 bg-white rounded-lg shadow-sm">No se encontró la materia.</div>;

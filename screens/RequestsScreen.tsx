@@ -5,6 +5,7 @@ import { getRequests } from '../store';
 import { RequestStatus, StudentRequest } from '../types';
 import { ChevronRightIcon, DocumentTextIcon } from '../components/Icons';
 import RequestDetailScreen from './RequestDetailScreen';
+import Spinner from '../components/Spinner';
 
 const StatusBadge = ({ status }: { status: RequestStatus }) => {
     const colorClasses = {
@@ -29,9 +30,20 @@ const DetailPlaceholder: React.FC<{ icon: React.ElementType; message: string; }>
 
 const RequestsScreen: React.FC = () => {
     const navigate = useNavigate();
-    const requests = getRequests();
+    const [requests, setRequests] = React.useState<StudentRequest[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [selectedRequest, setSelectedRequest] = React.useState<StudentRequest | null>(null);
     const [isDesktop, setIsDesktop] = React.useState(window.innerWidth >= 1024);
+
+    React.useEffect(() => {
+        getRequests().then(data => {
+            setRequests(data);
+            if (window.innerWidth >= 1024 && data.length > 0) {
+                setSelectedRequest(data[0]);
+            }
+            setIsLoading(false);
+        });
+    }, []);
 
     React.useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
@@ -58,35 +70,53 @@ const RequestsScreen: React.FC = () => {
         }
     };
 
+    if (isLoading && !isDesktop) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Spinner />
+            </div>
+        );
+    }
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-6">
             <div className="lg:col-span-1 space-y-4">
                 <div className="bg-white rounded-lg shadow-sm">
-                    <ul className="divide-y divide-slate-100">
-                        {requests.map(request => (
-                            <li key={request.id}>
-                                <button
-                                    onClick={() => handleRequestClick(request)}
-                                    className={`w-full text-left p-4 transition-colors ${selectedRequest?.id === request.id && isDesktop ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className={`font-semibold ${selectedRequest?.id === request.id && isDesktop ? 'text-indigo-800' : ''}`}>{request.title}</p>
-                                            <p className="text-sm text-slate-500">{request.studentName}</p>
-                                            <div className="mt-2">
-                                                <StatusBadge status={request.status} />
+                    {isLoading ? (
+                        <div className="flex justify-center items-center h-96">
+                            <Spinner />
+                        </div>
+                    ) : (
+                        <ul className="divide-y divide-slate-100">
+                            {requests.map(request => (
+                                <li key={request.id}>
+                                    <button
+                                        onClick={() => handleRequestClick(request)}
+                                        className={`w-full text-left p-4 transition-colors ${selectedRequest?.id === request.id && isDesktop ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className={`font-semibold ${selectedRequest?.id === request.id && isDesktop ? 'text-indigo-800' : ''}`}>{request.title}</p>
+                                                <p className="text-sm text-slate-500">{request.studentName}</p>
+                                                <div className="mt-2">
+                                                    <StatusBadge status={request.status} />
+                                                </div>
                                             </div>
+                                            <ChevronRightIcon className="w-5 h-5 text-slate-400 lg:hidden" />
                                         </div>
-                                        <ChevronRightIcon className="w-5 h-5 text-slate-400 lg:hidden" />
-                                    </div>
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
             </div>
              <div className="hidden lg:block lg:col-span-2">
-                {selectedRequest ? (
+                {isLoading ? (
+                     <div className="h-full flex items-center justify-center bg-white rounded-lg shadow-sm">
+                        <Spinner />
+                    </div>
+                ) : selectedRequest ? (
                     <RequestDetailScreen request={selectedRequest} />
                 ) : (
                     <DetailPlaceholder icon={DocumentTextIcon} message="Selecciona una solicitud para ver sus detalles y cambiar su estado." />

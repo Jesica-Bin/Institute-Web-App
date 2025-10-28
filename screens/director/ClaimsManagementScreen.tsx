@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { mockSuggestions } from '../../data';
+import { fetchSuggestions } from '../../db';
 import { Suggestion, SuggestionStatus } from '../../types';
 import { ChevronRightIcon, ChatBubbleLeftRightIcon } from '../../components/Icons';
+import Spinner from '../../components/Spinner';
 
 const StatusBadge: React.FC<{ status: SuggestionStatus }> = ({ status }) => {
     const colorClasses = {
@@ -55,21 +56,26 @@ const ClaimDetailView: React.FC<{ claim: Suggestion | null }> = ({ claim }) => {
 
 
 const ClaimsManagementScreen: React.FC = () => {
-    const [claims] = React.useState<Suggestion[]>(mockSuggestions);
+    const [claims, setClaims] = React.useState<Suggestion[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [selectedClaim, setSelectedClaim] = React.useState<Suggestion | null>(null);
     const [isDesktop, setIsDesktop] = React.useState(window.innerWidth >= 1024);
+
+    React.useEffect(() => {
+        fetchSuggestions().then(data => {
+            setClaims(data);
+            if (window.innerWidth >= 1024 && data.length > 0) {
+                setSelectedClaim(data[0]);
+            }
+            setIsLoading(false);
+        });
+    }, []);
 
     React.useEffect(() => {
         const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-
-    React.useEffect(() => {
-        if (isDesktop && claims.length > 0) {
-            setSelectedClaim(claims[0]);
-        }
-    }, [isDesktop, claims]);
 
     return (
         <div className="space-y-6">
@@ -79,28 +85,34 @@ const ClaimsManagementScreen: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-6">
-                <div className="lg:col-span-1 bg-white rounded-lg shadow-sm">
-                    <ul className="divide-y divide-slate-100">
-                        {claims.map(claim => (
-                            <li key={claim.id}>
-                                <button
-                                    onClick={() => setSelectedClaim(claim)}
-                                    className={`w-full text-left p-4 transition-colors ${selectedClaim?.id === claim.id && isDesktop ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className={`font-semibold ${selectedClaim?.id === claim.id && isDesktop ? 'text-indigo-800' : ''}`}>{claim.title}</p>
-                                            <p className="text-sm text-slate-500">{claim.type}</p>
+                <div className="lg:col-span-1 bg-white rounded-lg shadow-sm min-h-[300px]">
+                    {isLoading ? (
+                        <div className="flex justify-center items-center h-full">
+                            <Spinner />
+                        </div>
+                    ) : (
+                        <ul className="divide-y divide-slate-100">
+                            {claims.map(claim => (
+                                <li key={claim.id}>
+                                    <button
+                                        onClick={() => setSelectedClaim(claim)}
+                                        className={`w-full text-left p-4 transition-colors ${selectedClaim?.id === claim.id && isDesktop ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className={`font-semibold ${selectedClaim?.id === claim.id && isDesktop ? 'text-indigo-800' : ''}`}>{claim.title}</p>
+                                                <p className="text-sm text-slate-500">{claim.type}</p>
+                                            </div>
+                                            <StatusBadge status={claim.status} />
                                         </div>
-                                        <StatusBadge status={claim.status} />
-                                    </div>
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
                 <div className="lg:col-span-2">
-                    <ClaimDetailView claim={selectedClaim} />
+                    {isLoading && isDesktop ? <div className="h-full flex items-center justify-center bg-white rounded-lg shadow-sm"><Spinner /></div> : <ClaimDetailView claim={selectedClaim} />}
                 </div>
             </div>
         </div>
