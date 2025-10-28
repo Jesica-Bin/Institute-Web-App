@@ -1,6 +1,7 @@
-// This file simulates a connection to a database.
+// This file simulates a connection to a MongoDB database.
 // In a real-world scenario, this would be part of a backend API,
 // but for client-side demonstration, we simulate async calls here.
+// MONGODB_URI: "mongodb+srv://Vercel-Admin-app-institucional:lRekgK0mmY18eiEE@app-institucional.vtwd2tv.mongodb.net/?retryWrites=true&w=majority"
 
 import * as data from './data';
 import { Student, StudentRequest, Notification, AgendaItem, StudentUser, TeacherUser, DirectorUser, StudentSubject, SubjectDetail, StudentAttendanceRecord, Event, CertificateRequest, Suggestion, AbsenceToJustify, CalendarEvent, TeacherSubject, TeacherSubjectDetail, ManagedUser, AuditLog, ForumThread, Resource, Reservation, ClassLog } from './types';
